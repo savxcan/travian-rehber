@@ -1,4 +1,10 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
 export default function Home() {
+  const router = useRouter()
+
   return (
     <main>
       <h2>📌 Hoşgeldin</h2>
@@ -8,7 +14,9 @@ export default function Home() {
       </p>
 
       <div style={{marginTop: "20px"}}>
-        <button className="btn">⚔️ Saldırı Planlayıcıya Git</button>
+        <button className="btn" onClick={() => router.push("/simulator")}>
+          ⚔️ Simülatöre Git
+        </button>
       </div>
     </main>
   )

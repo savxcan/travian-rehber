@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deneme SALDIRI - Profesyonel Planlayıcı</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0f1a 0%, #0f1420 100%);
+    color: #e0e0e0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1f2e;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e67e22;
+    border-radius: 10px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+    background: linear-gradient(135deg, #e67e22, #f39c12);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.panel, .koy-panel {
+    background: linear-gradient(135deg, #1e2438, #161c2c);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(230, 126, 34, 0.2);
+}
+
+.panel h3, .koy-panel h3 {
+    color: #f39c12;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    border-left: 4px solid #e67e22;
+    padding-left: 15px;
+}
+
+input, select {
+    background: #0f1422;
+    border: 1px solid #2c3448;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #e67e22;
+    box-shadow: 0 0 10px rgba(230, 126, 34, 0.3);
+}
+
+button {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+}
+
+.guncelle {
+    background: linear-gradient(135deg, #2980b9, #1f6392);
+}
+
+.ekle {
+    background: linear-gradient(135deg, #27ae60, #1e8449);
+}
+
+.sil {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Tablo Stilleri */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+th {
+    background: linear-gradient(135deg, #2c3e50, #1a2632);
+    padding: 12px;
+    color: #f39c12;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #2c3448;
+}
+
+/* Saldırı Tipleri için Renklendirme */
+tr.real-row {
+    background: rgba(231, 76, 60, 0.25);
+}
+
+tr.fake-row {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+tr.kusatma-row {
+    background: rgba(155, 89, 182, 0.2);
+}
+
+tr:hover {
+    background: rgba(230, 126, 34, 0.1);
+}
+
+.fake { color: #3498db; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+.gercek { color: #e74c3c; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+.kusatma { color: #9b59b6; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+
+.mesafe { color: #bdc3c7; }
+.seyahat { color: #f1c40f; }
+.varis { color: #2ecc71; }
+.cikis { color: #e67e22; }
+
+/* Köy Yönetim Kartları */
+.koy-listesi {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.koy-kolon {
+    flex: 1;
+    min-width: 350px;
+    background: rgba(15, 20, 34, 0.8);
+    border-radius: 15px;
+    padding: 15px;
+    border: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+.koy-kolon h4 {
+    color: #e67e22;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.koy-item {
+    background: linear-gradient(135deg, #1e2638, #161e2c);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid #e67e22;
+}
+
+.koy-bilgi {
+    font-weight: bold;
+    color: #f39c12;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.koy-koordinat { color: #95a5a6; font-size: 12px; }
+.koy-turnuva { background: #27ae60; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; }
+
+.koy-butonlar button {
+    padding: 4px 10px;
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+/* Köy Ekleme Formu - Gelişmiş */
+.koy-ekle-form {
+    background: rgba(15, 20, 34, 0.8);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f39c12;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.field-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(230, 126, 34, 0.2);
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.field-desc {
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    margin-top: 4px;
+    padding-left: 40px;
+}
+
+.form-field input, .form-field select {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+/* Modal Stili */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1e2438, #161c2c);
+    padding: 30px;
+    border-radius: 20px;
+    width: 480px;
+    max-width: 90%;
+    border: 1px solid #e67e22;
+}
+
+.modal-content h3 {
+    color: #f39c12;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-field {
+    margin-bottom: 15px;
+}
+
+.modal-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f39c12;
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+}
+
+.modal-field input {
+    width: 100%;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.checkbox-cell input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #e67e22;
+}
+
+tr.selected {
+    outline: 2px solid #f39c12;
+    background: rgba(243, 156, 18, 0.2);
+}
+
+.speed-select {
+    width: 250px;
+    background: #0f1422;
+}
+
+.input-help {
+    color: #7f8c8d;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+    body { padding: 10px; }
+    .koy-listesi { flex-direction: column; }
+    table { font-size: 12px; display: block; overflow-x: auto; }
+    .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<h1><i class="fas fa-dragon"></i> Deneme Saldırı Planlayıcı <i class="fas fa-crosshairs"></i></h1>
+
+<!-- Köy Yönetim Paneli -->
+<div class="koy-panel">
+    <h3><i class="fas fa-city"></i> Köy Yönetimi <i class="fas fa-trophy"></i></h3>
+    
+    <!-- Yeni Köy Ekleme Formu - Gelişmiş -->
+    <div class="koy-ekle-form">
+        <div class="form-grid">
+            <div class="form-field">
+                <label>
+                    <span class="field-icon"><i class="fas fa-tag"></i></span>
+                    Köy İsmi
+                </label>
+                <input type="text" id="yeniKoyIsim" placeholder="Örn: Ana Üs, Off Köyü, WW01">
+                <div class="field-desc"><i class="fas fa-info-circle"></i> Köyü tanımlayacak benzersiz bir isim girin</div>
+            </div>
+            
+            <div class="form-field">
+                <label>
+                    <span class="field-icon"><i class="fas fa-map-marker-alt"></i></span>
+                    Koordinat (X | Y)
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="yeniKoyX" placeholder="X" style="width: 50%;">
+                    <input type="number" id="yeniKoyY" placeholder="Y" style="width: 50%;">
+                </div>
+                <div class="field-desc"><i class="fas fa-globe"></i> Haritadaki konum koordinatları (örn: 500|500)</div>
+            </div>
+            
+            <div class="form-field">
+                <label>
+                    <span class="field-icon"><i class="fas fa-trophy"></i></span>
+                    Turnuva Yeri Seviyesi
+                </label>
+                <input type="number" id="yeniKoyTurnuva" placeholder="0-20" min="0" max="20" value="0">
+                <div class="field-desc"><i class="fas fa-chart-line"></i> Köydeki turnuva yeri seviyesi (0-20 arası)</div>
+            </div>
+            
+            <div class="form-field">
+                <label>
+                    <span class="field-icon"><i class="fas fa-tasks"></i></span>
+                    Köy Tipi
+                </label>
+                <select id="yeniKoyTip">
+                    <option value="saldiran">🏹 Saldıran Köy - Kendi köyleriniz</option>
+                    <option value="hedef">🎯 Hedef Köy - Saldırılacak köyler</option>
+                    <option value="her ikisi">🔄 Her İkisi - Hem saldıran hem hedef</option>
+                </select>
+                <div class="field-desc"><i class="fas fa-question-circle"></i> Köyün hangi amaçla kullanılacağını seçin</div>
+            </div>
+        </div>
+        
+        <div class="form-buttons">
+            <button onclick="koyEkle()" class="ekle"><i class="fas fa-save"></i> Köy Ekle</button>
+            <button onclick="koyleriKaydet()" class="guncelle"><i class="fas fa-database"></i> Köyleri Kaydet</button>
+            <button onclick="koyleriYukle()" class="guncelle"><i class="fas fa-upload"></i> Köyleri Yükle</button>
+        </div>
+    </div>
+    
+    <!-- Köy Listeleri -->
+    <div class="koy-listesi">
+        <div class="koy-kolon">
+            <h4><i class="fas fa-flag-checkered"></i> Saldıran Köyler <span style="font-size:12px; color:#7f8c8d;">(Kendi köyleriniz)</span></h4>
+            <div id="saldiranKoyListesi"></div>
+        </div>
+        <div class="koy-kolon">
+            <h4><i class="fas fa-bullseye"></i> Hedef Köyler <span style="font-size:12px; color:#7f8c8d;">(Saldırılacak köyler)</span></h4>
+            <div id="hedefKoyListesi"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Saldırı Planlama Paneli -->
+<div class="panel">
+    <h3><i class="fas fa-fire"></i> Yeni Saldırı</h3>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px;">
+            <h4 style="color:#f39c12"><i class="fas fa-arrow-right"></i> Saldıran Köy</h4>
+            <select id="saldiranKoySelect" style="width:250px; margin-bottom:5px;" onchange="saldiranKoySec()">
+                <option value="">-- Köy Seç --</option>
+            </select>
+            <button onclick="saldiranKoyuTemizle()" style="font-size:12px;"><i class="fas fa-eraser"></i> Temizle</button><br>
+            <i class="fas fa-tag"></i> İsim <input id="attackername" placeholder="İsim" style="width:150px"><br>
+            <i class="fas fa-map-marker-alt"></i> X <input id="ax" style="width:60px"> Y <input id="ay" style="width:60px">
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+            <h4 style="color:#f39c12"><i class="fas fa-arrow-left"></i> Hedef Köy</h4>
+            <select id="hedefKoySelect" style="width:250px; margin-bottom:5px;" onchange="hedefKoySec()">
+                <option value="">-- Köy Seç --</option>
+            </select>
+            <button onclick="hedefKoyuTemizle()" style="font-size:12px;"><i class="fas fa-eraser"></i> Temizle</button><br>
+            <i class="fas fa-tag"></i> İsim <input id="targetname" placeholder="İsim" style="width:150px"><br>
+            <i class="fas fa-map-marker-alt"></i> X <input id="tx" style="width:60px"> Y <input id="ty" style="width:60px">
+        </div>
+        
+        <div style="flex: 1; min-width: 280px;">
+            <h4 style="color:#f39c12"><i class="fas fa-sliders-h"></i> Saldırı Ayarları</h4>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fas fa-trophy"></i>
+                <span>Turnuva Seviyesi:</span>
+                <input id="turnuvaSeviyesi" type="number" min="0" max="20" value="0" style="width:70px" readonly>
+                <span style="color:#999;">(köyden gelir)</span>
+            </div>
+            
+            <i class="fas fa-bomb"></i> Tür <select id="tur" style="width:150px">
+                <option value="fake">🕊️ Fake Saldırı</option>
+                <option value="real">⚔️ Gerçek Saldırı</option>
+                <option value="kusatma">🏰 Kuşatma (2x Süre)</option>
+            </select><br>
+            
+            <i class="fas fa-user-ninja"></i> Asker Birimi <select id="troopSelect" class="speed-select" onchange="updateSpeedFromSelect()">
+                <optgroup label="🏹 ROMALILAR">
+                    <option value="6">Lejyoner (6)</option>
+                    <option value="5">Pretoryan (5)</option>
+                    <option value="7">Emperyan (7)</option>
+                    <option value="16">Equites Legati (16)</option>
+                    <option value="14">Equites İmperatoris (14)</option>
+                    <option value="10">Equites Caesaris (10)</option>
+                    <option value="4">Şahmerdan (4)</option>
+                    <option value="3">Ateş Mancınığı (3)</option>
+                    <option value="4">Senatör (4)</option>
+                    <option value="5">Yerleşimci (5)</option>
+                </optgroup>
+                <optgroup label="⚒️ CERMENLER">
+                    <option value="7">Tokmak Sallayan (7)</option>
+                    <option value="7">Mızrakçı (7)</option>
+                    <option value="6">Balta Sallayan (6)</option>
+                    <option value="9">Casus (9)</option>
+                    <option value="10">Paladin (10)</option>
+                    <option value="9">Toyton (9)</option>
+                    <option value="4">Koçbaşı (4)</option>
+                    <option value="3">Mancınık (3)</option>
+                    <option value="4">Reis (4)</option>
+                    <option value="5">Yerleşimci (5)</option>
+                </optgroup>
+                <optgroup label="🛡️ GALYALILAR">
+                    <option value="7">Falanks (7)</option>
+                    <option value="6">Kılıçlı (6)</option>
+                    <option value="17">Casus (17)</option>
+                    <option value="19">Toytatın Şimşeği (19)</option>
+                    <option value="16">Druyid (16)</option>
+                    <option value="13">Heduan (13)</option>
+                    <option value="4">Koçbaşı (4)</option>
+                    <option value="3">Mancınık (3)</option>
+                    <option value="5">Kabile Reisi (5)</option>
+                    <option value="5">Yerleşimci (5)</option>
+                </optgroup>
+            </select><br>
+            
+            <i class="fas fa-tachometer-alt"></i> Asker Hızı <input id="speed" style="width:60px" readonly><br>
+            
+            <div style="margin-top: 10px;">
+                <i class="fas fa-clock"></i> <span style="color:#f39c12;">Varış Zamanı</span>
+                <input type="datetime-local" id="arrivalTime" step="1" style="width:220px">
+                <div class="input-help"><i class="fas fa-info-circle"></i> Takvimden seç veya manuel yaz</div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+    <button onclick="ekle()"><i class="fas fa-plus"></i> Saldırı Ekle</button>
+    <button onclick="kaydet()"><i class="fas fa-save"></i> Planı Kaydet</button>
+    <button onclick="yukle()"><i class="fas fa-upload"></i> Planı Yükle</button>
+    <button onclick="topluGuncelle()" class="guncelle"><i class="fas fa-sync-alt"></i> Seçililerin Varış Saatini Güncelle</button>
+    <button onclick="secimTemizle()"><i class="fas fa-times"></i> Seçimi Temizle</button>
+    <button onclick="tumunuSec()"><i class="fas fa-check-double"></i> Tümünü Seç</button>
+    <button onclick="tabloyuSirala()"><i class="fas fa-sort-amount-down"></i> Çıkış Zamanına Göre Sırala</button>
+</div>
+
+<table>
+    <thead>
+        <tr><th>#</th><th>Tür</th><th colspan="3">Saldıran Köy</th><th colspan="3">Hedef Köy</th><th>Turnuva</th><th>Mesafe</th><th>Seyahat Süresi</th><th>Varış</th><th>Çıkış</th><th>Sil</th></tr>
+        <tr><th></th><th></th><th>İsim</th><th>X</th><th>Y</th><th>İsim</th><th>X</th><th>Y</th><th></th><th></th><th></th><th></th><th></th><th></th></tr>
+    </thead>
+    <tbody id="body"></tbody>
+</table>
+
+<!-- Düzenleme Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3><i class="fas fa-edit"></i> Köy Düzenle</h3>
+        <div class="modal-field">
+            <label><i class="fas fa-tag"></i> Köy İsmi</label>
+            <input type="text" id="editKoyIsim" placeholder="Köy İsmi">
+        </div>
+        <div class="modal-field">
+            <label><i class="fas fa-map-marker-alt"></i> Koordinat (X | Y)</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="editKoyX" placeholder="X" style="width: 50%;">
+                <input type="number" id="editKoyY" placeholder="Y" style="width: 50%;">
+            </div>
+        </div>
+        <div class="modal-field">
+            <label><i class="fas fa-trophy"></i> Turnuva Yeri Seviyesi (0-20)</label>
+            <input type="number" id="editKoyTurnuva" min="0" max="20">
+        </div>
+        <div class="modal-buttons">
+            <button onclick="modalKaydet()" class="ekle"><i class="fas fa-save"></i> Kaydet</button>
+            <button onclick="modalKapat()" class="sil"><i class="fas fa-times"></i> İptal</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let koyler = { saldiran: [], hedef: [] };
+const STORAGE_KOYLER = "travianKoylerTurnuva";
+const STORAGE_PLAN = "travianPlanTurnuva";
+
+window.onload = function() { koyleriYukle(); updateSpeedFromSelect(); };
+
+function updateSpeedFromSelect() {
+    document.getElementById("speed").value = document.getElementById("troopSelect").value;
+}
+
+function turnuvaBonus(distance, speed, level, isKusatma) {
+    let baseTime = distance <= 20 ? distance / speed : (20 / speed) + ((distance - 20) / (speed * (1 + level * 0.1)));
+    return isKusatma ? baseTime * 2 : baseTime;
+}
+
+function formatDuration(sec) {
+    let h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return h + "s " + m + "d " + s + "sn";
+}
+
+function formatDateTime(date) {
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0') + ' ' +
+           String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0') + ':' + String(date.getSeconds()).padStart(2,'0');
+}
+
+function parseDateTimeLocal(str) {
+    if (!str) return null;
+    str = str.replace('T', ' ');
+    if (str.length === 16) str += ':00';
+    let p = str.split(/[-\s:]/);
+    return p.length >= 6 ? new Date(p[0], p[1]-1, p[2], p[3], p[4], p[5]) : null;
+}
+
+function parseDuration(str) {
+    let m = str.match(/(\d+)s\s+(\d+)d\s+(\d+)sn/);
+    return m ? parseInt(m[1])*3600 + parseInt(m[2])*60 + parseInt(m[3]) : null;
+}
+
+// Tüm saldırıları yeniden hesapla (köy güncellemesi sonrası)
+function tumSaldirilariYenidenHesapla() {
+    let rows = document.querySelectorAll("#body tr");
+    rows.forEach(row => {
+        let attackerName = row.cells[2]?.innerText.replace(/<[^>]*>/g, '').trim();
+        let ax = parseFloat(row.cells[3]?.innerText);
+        let ay = parseFloat(row.cells[4]?.innerText);
+        let targetName = row.cells[5]?.innerText.replace(/<[^>]*>/g, '').trim();
+        let tx = parseFloat(row.cells[6]?.innerText);
+        let ty = parseFloat(row.cells[7]?.innerText);
+        let turnuva = parseInt(row.cells[8]?.innerText.replace(/[^0-9]/g, '')) || 0;
+        let typeCell = row.cells[1]?.innerText;
+        let type = typeCell.includes("FAKE") ? "fake" : (typeCell.includes("KUŞATMA") ? "kusatma" : "real");
+        let speed = parseFloat(row.cells[0]?.getAttribute("data-speed")) || 6;
+        
+        // Asker hızını satırdan al (önceki kayıtlardan)
+        let speedFromRow = row.getAttribute("data-speed");
+        if (speedFromRow) speed = parseFloat(speedFromRow);
+        
+        let dx = ax - tx, dy = ay - ty;
+        let distance = Math.sqrt(dx*dx + dy*dy);
+        let isKusatma = (type == "kusatma");
+        let hours = turnuvaBonus(distance, speed, turnuva, isKusatma);
+        let totalSeconds = Math.floor(hours * 3600);
+        
+        let varisStr = row.cells[11]?.innerText.replace(/[^0-9\-: ]/g, '').trim();
+        let varisDate = varisStr ? new Date(varisStr) : null;
+        
+        if (varisDate && !isNaN(varisDate)) {
+            let cikisDate = new Date(varisDate.getTime() - totalSeconds * 1000);
+            row.cells[9].innerHTML = `<span class='mesafe'><i class='fas fa-arrows-alt'></i> ${distance.toFixed(2)}</span>`;
+            row.cells[10].innerHTML = `<span class='seyahat'><i class='fas fa-hourglass-half'></i> ${formatDuration(totalSeconds)}</span>`;
+            row.cells[12].innerHTML = `<span class='cikis'><i class='fas fa-paper-plane'></i> ${formatDateTime(cikisDate)}</span>`;
+        }
+    });
+}
+
+function setupRow(row) {
+    let cb = row.cells[0]?.querySelector("input");
+    if (cb) cb.onchange = function() { this.checked ? row.classList.add("selected") : row.classList.remove("selected"); };
+    for (let i = 9; i <= 12; i++) if (row.cells[i]) makeEditable(row.cells[i], i, row);
+    let silBtn = row.cells[13]?.querySelector("button");
+    if (silBtn) silBtn.onclick = () => row.remove();
+}
+
+function makeEditable(cell, idx, row) {
+    cell.classList.add("editable");
+    cell.ondblclick = function(e) {
+        let val = this.innerText.replace(/<[^>]*>/g, '').trim();
+        let inp = document.createElement("input");
+        inp.value = val;
+        inp.className = "editing-input";
+        this.innerHTML = "";
+        this.appendChild(inp);
+        inp.focus();
+        inp.onblur = () => { cell.innerHTML = inp.value; updateCalculations(row, idx, inp.value); };
+        inp.onkeypress = e => { if (e.key === "Enter") inp.blur(); };
+    };
+}
+
+function updateCalculations(row, idx, newVal) {
+    if (idx == 11) {
+        let varis = new Date(newVal);
+        if (!isNaN(varis)) {
+            let seyahatStr = row.cells[10].innerText.replace(/[^0-9s d sn]/g, '');
+            let sec = parseDuration(seyahatStr);
+            if (sec) row.cells[12].innerHTML = `<span class='cikis'><i class='fas fa-paper-plane'></i> ${formatDateTime(new Date(varis - sec*1000))}</span>`;
+        }
+    } else if (idx == 12) {
+        let cikis = new Date(newVal);
+        if (!isNaN(cikis)) {
+            let seyahatStr = row.cells[10].innerText.replace(/[^0-9s d sn]/g, '');
+            let sec = parseDuration(seyahatStr);
+            if (sec) row.cells[11].innerHTML = `<span class='varis'><i class='fas fa-flag-checkered'></i> ${formatDateTime(new Date(cikis.getTime() + sec*1000))}</span>`;
+        }
+    }
+}
+
+function koyEkle() {
+    let isim = document.getElementById("yeniKoyIsim").value.trim();
+    let x = document.getElementById("yeniKoyX").value;
+    let y = document.getElementById("yeniKoyY").value;
+    let turnuva = document.getElementById("yeniKoyTurnuva").value || 0;
+    let tip = document.getElementById("yeniKoyTip").value;
+    if (!isim || !x || !y) { alert("Lütfen tüm alanları doldurun!"); return; }
+    if (turnuva < 0 || turnuva > 20) { alert("Turnuva 0-20 arası olmalı!"); return; }
+    let yeniKoy = { id: Date.now() + Math.random(), isim, x: parseInt(x), y: parseInt(y), turnuva: parseInt(turnuva) };
+    if (tip == "saldiran" || tip == "her ikisi") koyler.saldiran.push({...yeniKoy});
+    if (tip == "hedef" || tip == "her ikisi") koyler.hedef.push({...yeniKoy});
+    document.getElementById("yeniKoyIsim").value = "";
+    document.getElementById("yeniKoyX").value = "";
+    document.getElementById("yeniKoyY").value = "";
+    document.getElementById("yeniKoyTurnuva").value = "0";
+    koyListeleriniGuncelle();
+    koyleriKaydet();
+}
+
+function koyDuzenle(tip, id) {
+    let koy = koyler[tip].find(k => k.id == id);
+    if (!koy) return;
+    window.editTip = tip;
+    window.editId = id;
+    document.getElementById("editKoyIsim").value = koy.isim;
+    document.getElementById("editKoyX").value = koy.x;
+    document.getElementById("editKoyY").value = koy.y;
+    document.getElementById("editKoyTurnuva").value = koy.turnuva;
+    document.getElementById("editModal").style.display = "flex";
+}
+
+function modalKaydet() {
+    let yeniIsim = document.getElementById("editKoyIsim").value.trim();
+    let yeniX = parseInt(document.getElementById("editKoyX").value);
+    let yeniY = parseInt(document.getElementById("editKoyY").value);
+    let yeniTurnuva = parseInt(document.getElementById("editKoyTurnuva").value);
+    if (!yeniIsim || isNaN(yeniX) || isNaN(yeniY)) { alert("Tüm alanları doldurun!"); return; }
+    if (yeniTurnuva < 0 || yeniTurnuva > 20) { alert("Turnuva 0-20 arası olmalı!"); return; }
+    let koy = koyler[window.editTip].find(k => k.id == window.editId);
+    if (koy) {
+        koy.isim = yeniIsim;
+        koy.x = yeniX;
+        koy.y = yeniY;
+        koy.turnuva = yeniTurnuva;
+        // Plan tablosundaki ilgili satırları güncelle
+        document.querySelectorAll("#body tr").forEach(row => {
+            let attName = row.cells[2]?.innerText.replace(/<[^>]*>/g, '').trim();
+            let attX = row.cells[3]?.innerText;
+            let attY = row.cells[4]?.innerText;
+            let tgtName = row.cells[5]?.innerText.replace(/<[^>]*>/g, '').trim();
+            let tgtX = row.cells[6]?.innerText;
+            let tgtY = row.cells[7]?.innerText;
+            if (window.editTip == "saldiran" && attName == koy.isim && attX == koy.x && attY == koy.y) {
+                row.cells[2].innerHTML = `<i class='fas fa-fort'></i> ${yeniIsim}`;
+                row.cells[3].innerText = yeniX;
+                row.cells[4].innerText = yeniY;
+            }
+            if (window.editTip == "hedef" && tgtName == koy.isim && tgtX == koy.x && tgtY == koy.y) {
+                row.cells[5].innerHTML = `<i class='fas fa-castle'></i> ${yeniIsim}`;
+                row.cells[6].innerText = yeniX;
+                row.cells[7].innerText = yeniY;
+            }
+        });
+        // Turnuva değiştiyse tüm saldırıları yeniden hesapla
+        if (window.editTip == "saldiran") {
+            document.querySelectorAll("#body tr").forEach(row => {
+                let attName = row.cells[2]?.innerText.replace(/<[^>]*>/g, '').trim();
+                if (attName == yeniIsim) {
+                    row.cells[8].innerHTML = `<span class='seyahat'><i class='fas fa-trophy'></i> ${yeniTurnuva}</span>`;
+                }
+            });
+        }
+        tumSaldirilariYenidenHesapla();
+        koyListeleriniGuncelle();
+        koyleriKaydet();
+    }
+    modalKapat();
+}
+
+function modalKapat() { document.getElementById("editModal").style.display = "none"; }
+
+function koySil(tip, id) {
+    if (confirm("Köy silinsin mi?")) {
+        koyler[tip] = koyler[tip].filter(k => k.id != id);
+        koyListeleriniGuncelle();
+        koyleriKaydet();
+    }
+}
+
+function koyListeleriniGuncelle() {
+    let saldiranDiv = document.getElementById("saldiranKoyListesi");
+    saldiranDiv.innerHTML = "";
+    koyler.saldiran.forEach(k => {
+        let div = document.createElement("div");
+        div.className = "koy-item";
+        div.innerHTML = `<div><span class="koy-bilgi"><i class="fas fa-fort"></i> ${k.isim}</span><span class="koy-koordinat">(${k.x}|${k.y})</span><span class="koy-turnuva"><i class="fas fa-trophy"></i> ${k.turnuva}</span></div>
+                        <div><button class="koy-duzenle" onclick="koyDuzenle('saldiran', ${k.id})"><i class="fas fa-edit"></i></button><button class="koy-sil" onclick="koySil('saldiran', ${k.id})"><i class="fas fa-trash"></i></button></div>`;
+        saldiranDiv.appendChild(div);
+    });
+    let hedefDiv = document.getElementById("hedefKoyListesi");
+    hedefDiv.innerHTML = "";
+    koyler.hedef.forEach(k => {
+        let div = document.createElement("div");
+        div.className = "koy-item";
+        div.innerHTML = `<div><span class="koy-bilgi"><i class="fas fa-castle"></i> ${k.isim}</span><span class="koy-koordinat">(${k.x}|${k.y})</span><span class="koy-turnuva"><i class="fas fa-trophy"></i> ${k.turnuva}</span></div>
+                        <div><button class="koy-duzenle" onclick="koyDuzenle('hedef', ${k.id})"><i class="fas fa-edit"></i></button><button class="koy-sil" onclick="koySil('hedef', ${k.id})"><i class="fas fa-trash"></i></button></div>`;
+        hedefDiv.appendChild(div);
+    });
+    let saldiranSelect = document.getElementById("saldiranKoySelect");
+    let hedefSelect = document.getElementById("hedefKoySelect");
+    saldiranSelect.innerHTML = '<option value="">-- Köy Seç --</option>';
+    hedefSelect.innerHTML = '<option value="">-- Köy Seç --</option>';
+    koyler.saldiran.forEach(k => { let opt = document.createElement("option"); opt.value = k.id; opt.text = `${k.isim} (${k.x}|${k.y}) - 🏟️${k.turnuva}`; saldiranSelect.appendChild(opt); });
+    koyler.hedef.forEach(k => { let opt = document.createElement("option"); opt.value = k.id; opt.text = `${k.isim} (${k.x}|${k.y}) - 🏟️${k.turnuva}`; hedefSelect.appendChild(opt); });
+}
+
+function saldiranKoySec() {
+    let id = document.getElementById("saldiranKoySelect").value;
+    let k = koyler.saldiran.find(k => k.id == id);
+    if (k) { document.getElementById("attackername").value = k.isim; document.getElementById("ax").value = k.x; document.getElementById("ay").value = k.y; document.getElementById("turnuvaSeviyesi").value = k.turnuva; }
+}
+
+function hedefKoySec() {
+    let id = document.getElementById("hedefKoySelect").value;
+    let k = koyler.hedef.find(k => k.id == id);
+    if (k) { document.getElementById("targetname").value = k.isim; document.getElementById("tx").value = k.x; document.getElementById("ty").value = k.y; }
+}
+
+function saldiranKoyuTemizle() { document.getElementById("attackername").value = ""; document.getElementById("ax").value = ""; document.getElementById("ay").value = ""; document.getElementById("saldiranKoySelect").value = ""; document.getElementById("turnuvaSeviyesi").value = "0"; }
+function hedefKoyuTemizle() { document.getElementById("targetname").value = ""; document.getElementById("tx").value = ""; document.getElementById("ty").value = ""; document.getElementById("hedefKoySelect").value = ""; }
+function koyleriKaydet() { localStorage.setItem(STORAGE_KOYLER, JSON.stringify(koyler)); alert("Köyler kaydedildi!"); }
+function koyleriYukle() { let d = localStorage.getItem(STORAGE_KOYLER); if (d) { koyler = JSON.parse(d); koyListeleriniGuncelle(); } }
+
+function createRow(attName, ax, ay, tgtName, tx, ty, turnuva, type, speed, arrivalDate, distance, totalSeconds) {
+    let body = document.getElementById("body");
+    let row = body.insertRow();
+    let icon, typeText, classType, rowClass;
+    if (type == "fake") { icon = "🕊️"; typeText = "FAKE"; classType = "fake"; rowClass = "fake-row"; }
+    else if (type == "kusatma") { icon = "🏰"; typeText = "KUŞATMA"; classType = "kusatma"; rowClass = "kusatma-row"; }
+    else { icon = "⚔️"; typeText = "GERÇEK"; classType = "gercek"; rowClass = "real-row"; }
+    row.className = rowClass;
+    row.setAttribute("data-speed", speed);
+    let cb = row.insertCell(0); cb.className = "checkbox-cell"; let chk = document.createElement("input"); chk.type = "checkbox"; cb.appendChild(chk);
+    row.insertCell(1).innerHTML = `<span class='${classType}'><i class='${type=="fake"?"fas fa-dove":(type=="kusatma"?"fas fa-crown":"fas fa-skull")}'></i> ${typeText}</span>`;
+    row.insertCell(2).innerHTML = `<i class='fas fa-fort'></i> ${attName}`;
+    row.insertCell(3).innerText = ax; row.insertCell(4).innerText = ay;
+    row.insertCell(5).innerHTML = `<i class='fas fa-castle'></i> ${tgtName}`;
+    row.insertCell(6).innerText = tx; row.insertCell(7).innerText = ty;
+    row.insertCell(8).innerHTML = `<span class='seyahat'><i class='fas fa-trophy'></i> ${turnuva}</span>`;
+    row.insertCell(9).innerHTML = `<span class='mesafe'><i class='fas fa-arrows-alt'></i> ${distance.toFixed(2)}</span>`;
+    row.insertCell(10).innerHTML = `<span class='seyahat'><i class='fas fa-hourglass-half'></i> ${formatDuration(totalSeconds)}</span>`;
+    row.insertCell(11).innerHTML = `<span class='varis'><i class='fas fa-flag-checkered'></i> ${formatDateTime(arrivalDate)}</span>`;
+    let send = new Date(arrivalDate - totalSeconds * 1000);
+    row.insertCell(12).innerHTML = `<span class='cikis'><i class='fas fa-paper-plane'></i> ${formatDateTime(send)}</span>`;
+    row.insertCell(13).innerHTML = "<button class='sil'><i class='fas fa-trash-alt'></i> Sil</button>";
+    setupRow(row);
+    return row;
+}
+
+function ekle() {
+    let attName = document.getElementById("attackername").value || "-";
+    let tgtName = document.getElementById("targetname").value || "-";
+    let ax = parseFloat(document.getElementById("ax").value);
+    let ay = parseFloat(document.getElementById("ay").value);
+    let tx = parseFloat(document.getElementById("tx").value);
+    let ty = parseFloat(document.getElementById("ty").value);
+    let turnuva = parseInt(document.getElementById("turnuvaSeviyesi").value) || 0;
+    let speed = parseFloat(document.getElementById("speed").value);
+    let arrivalInput = document.getElementById("arrivalTime").value;
+    if (!arrivalInput) { alert("Varış zamanı seçin!"); return; }
+    let arrivalDate = parseDateTimeLocal(arrivalInput);
+    if (!arrivalDate) { alert("Geçersiz tarih!"); return; }
+    let distance = Math.sqrt((ax-tx)*(ax-tx) + (ay-ty)*(ay-ty));
+    let type = document.getElementById("tur").value;
+    let hours = turnuvaBonus(distance, speed, turnuva, type == "kusatma");
+    createRow(attName, ax, ay, tgtName, tx, ty, turnuva, type, speed, arrivalDate, distance, Math.floor(hours * 3600));
+}
+
+function tabloyuSirala() {
+    let tbody = document.getElementById("body");
+    let rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.sort((a,b) => a.cells[12]?.innerText.localeCompare(b.cells[12]?.innerText));
+    rows.forEach(r => tbody.appendChild(r));
+}
+
+function kaydet() { localStorage.setItem(STORAGE_PLAN, document.getElementById("body").innerHTML); alert("Plan kaydedildi"); }
+function yukle() { let d = localStorage.getItem(STORAGE_PLAN); if (d) { document.getElementById("body").innerHTML = d; document.querySelectorAll("#body tr").forEach(r => setupRow(r)); } else alert("Kayıtlı plan yok!"); }
+function topluGuncelle() {
+    let rows = document.querySelectorAll("#body tr.selected");
+    if (!rows.length) { alert("Satır seçin!"); return; }
+    let yeniVaris = parseDateTimeLocal(document.getElementById("arrivalTime").value);
+    if (!yeniVaris) { alert("Geçersiz tarih!"); return; }
+    rows.forEach(r => {
+        r.cells[11].innerHTML = `<span class='varis'><i class='fas fa-flag-checkered'></i> ${formatDateTime(yeniVaris)}</span>`;
+        let seyahatStr = r.cells[10].innerText.replace(/[^0-9s d sn]/g, '');
+        let sec = parseDuration(seyahatStr);
+        if (sec) r.cells[12].innerHTML = `<span class='cikis'><i class='fas fa-paper-plane'></i> ${formatDateTime(new Date(yeniVaris - sec*1000))}</span>`;
+    });
+}
+function secimTemizle() { document.querySelectorAll("#body tr.selected").forEach(r => { r.classList.remove("selected"); let cb = r.cells[0]?.querySelector("input"); if(cb) cb.checked = false; }); }
+function tumunuSec() { document.querySelectorAll("#body tr").forEach(r => { r.classList.add("selected"); let cb = r.cells[0]?.querySelector("input"); if(cb) cb.checked = true; }); }
+</script>
+</body>
+</html>

@@ -1,8 +1,15 @@
 export default function Home() {
   return (
-    <main style={{padding: "20px"}}>
-      <h1>🔥 Travian Kingdoms Rehberi</h1>
-      <p>Sistem çalışıyor...</p>
+    <main>
+      <h2>📌 Hoşgeldin</h2>
+
+      <p>
+        Travian Kingdoms için en hızlı köy kurma ve saldırı planlama rehberi.
+      </p>
+
+      <div style={{marginTop: "20px"}}>
+        <button className="btn">⚔️ Saldırı Planlayıcıya Git</button>
+      </div>
     </main>
-  );
+  )
 }

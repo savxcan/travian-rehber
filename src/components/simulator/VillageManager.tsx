@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 type Village = {
   id: number
@@ -10,12 +10,27 @@ type Village = {
   type: "saldiran" | "hedef"
 }
 
+const STORAGE_KEY = "travian_villages"
+
 export default function VillageManager() {
   const [villages, setVillages] = useState<Village[]>([])
   const [name, setName] = useState("")
   const [x, setX] = useState("")
   const [y, setY] = useState("")
   const [type, setType] = useState<"saldiran" | "hedef">("saldiran")
+
+  // 🔥 LOAD
+  useEffect(() => {
+    const data = localStorage.getItem(STORAGE_KEY)
+    if (data) {
+      setVillages(JSON.parse(data))
+    }
+  }, [])
+
+  // 🔥 SAVE
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(villages))
+  }, [villages])
 
   const addVillage = () => {
     if (!name || !x || !y) return alert("Alanları doldur")
@@ -28,21 +43,20 @@ export default function VillageManager() {
       type
     }
 
-    setVillages([...villages, newVillage])
+    setVillages(prev => [...prev, newVillage])
     setName("")
     setX("")
     setY("")
   }
 
   const deleteVillage = (id: number) => {
-    setVillages(villages.filter(v => v.id !== id))
+    setVillages(prev => prev.filter(v => v.id !== id))
   }
 
   return (
     <div style={{marginTop: "20px"}}>
       <h3>🏘️ Köy Yönetimi</h3>
 
-      {/* FORM */}
       <div style={{
         display: "flex",
         gap: "10px",
@@ -61,7 +75,6 @@ export default function VillageManager() {
         <button className="btn" onClick={addVillage}>Ekle</button>
       </div>
 
-      {/* LİSTE */}
       <div style={{marginTop: "20px"}}>
         {villages.map(v => (
           <div key={v.id} style={{

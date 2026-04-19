@@ -3,6 +3,7 @@
 import { useState } from "react"
 import VillageManager from "./VillageManager"
 import AttackForm from "./AttackForm"
+import AttackTable from "./AttackTable"
 
 export default function SimulatorLayout() {
   const [villages, setVillages] = useState([])
@@ -14,6 +15,8 @@ export default function SimulatorLayout() {
       <VillageManager onChange={setVillages} />
 
       <AttackForm villages={villages} />
+
+      <AttackTable />
     </div>
   )
 }

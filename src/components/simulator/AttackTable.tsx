@@ -15,7 +15,7 @@ export default function AttackTable({ attacks }: { attacks: Attack[] }) {
     <div style={{ marginTop: "40px" }}>
       <h3>📋 Saldırı Listesi</h3>
 
-      <table style={{ width: "100%" }}>
+      <table style={{ width: "100%", tableLayout: "fixed" }}>
         <thead>
           <tr>
             <th>#</th>

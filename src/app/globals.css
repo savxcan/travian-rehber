@@ -41,3 +41,24 @@ a {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
 }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th {
+    text-align: left;
+    padding: 10px;
+    background: #1a2236;
+    color: #f39c12;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #2c3448;
+}
+
+tr:hover {
+    background: rgba(230, 126, 34, 0.1);
+}

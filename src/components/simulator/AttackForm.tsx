@@ -56,6 +56,7 @@ export default function AttackForm({
   const [tribe, setTribe] = useState<"roma" | "cermen" | "galya">("roma")
   const [troopIndex, setTroopIndex] = useState(0)
   const [turnuva, setTurnuva] = useState(0)
+  const [arrivalTime, setArrivalTime] = useState("")
 
   const attacker = villages.find((v: any) => v.id === attackerId)
   const target = villages.find((v: any) => v.id === targetId)
@@ -83,27 +84,31 @@ export default function AttackForm({
     }
   }
 
-  const addAttack = () => {
-    if (!attacker || !target) return alert("Köy seç")
+const addAttack = () => {
+  if (!attacker || !target) return alert("Köy seç")
+  if (!arrivalTime) return alert("Varış zamanı gir")
 
-    const distance = calculateDistance()
-    const duration = calculateTime()
+  const distance = calculateDistance()
+  const duration = calculateTime()
 
-    const arrival = new Date()
-    const departure = new Date(arrival.getTime() - duration * 3600 * 1000)
+  const arrivalDate = new Date(arrivalTime)
 
-    onAddAttack({
-      id: Date.now(),
-      attacker: attacker.name,
-      target: target.name,
-      troop: selectedTroop.name,
-      speed,
-      distance,
-      duration,
-      arrival: arrival.toLocaleString(),
-      departure: departure.toLocaleString()
-    })
-  }
+  const departureDate = new Date(
+    arrivalDate.getTime() - duration * 3600 * 1000
+  )
+
+  onAddAttack({
+    id: Date.now(),
+    attacker: attacker.name,
+    target: target.name,
+    troop: selectedTroop.name,
+    speed,
+    distance,
+    duration,
+    arrival: arrivalDate.toLocaleString(),
+    departure: departureDate.toLocaleString()
+  })
+}
 
   return (
     <div style={{ marginTop: "30px" }}>
@@ -148,6 +153,11 @@ export default function AttackForm({
           value={turnuva}
           onChange={e => setTurnuva(Number(e.target.value))}
           placeholder="Turnuva"
+        />
+		<input
+          type="datetime-local"
+          value={arrivalTime}
+          onChange={e => setArrivalTime(e.target.value)}
         />
       </div>
 

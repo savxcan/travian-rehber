@@ -19,6 +19,7 @@ export default function AttackTable({ attacks }: { attacks: Attack[] }) {
         <thead>
           <tr>
             <th>#</th>
+			<th>Asker</th>
             <th>Saldıran</th>
             <th>Hedef</th>
             <th>Mesafe</th>
@@ -32,6 +33,7 @@ export default function AttackTable({ attacks }: { attacks: Attack[] }) {
           {attacks.map((a, i) => (
             <tr key={a.id}>
               <td>{i + 1}</td>
+			  <td>{a.troop}</td>
               <td>{a.attacker}</td>
               <td>{a.target}</td>
               <td>{a.distance.toFixed(2)}</td>

@@ -46,8 +46,12 @@ const troops = {
 export default function AttackForm({ villages, onAddAttack }: any) {
   const [attackerId, setAttackerId] = useState<number | null>(null)
   const [targetId, setTargetId] = useState<number | null>(null)
-  const [tribe, setTribe] = useState("roma")
+  const [tribe, setTribe] = useState<"roma" | "cermen" | "galya">("roma")
   const [troopIndex, setTroopIndex] = useState(0)
+
+  const [useSlowest, setUseSlowest] = useState(false)
+  const [manualSlowSpeed, setManualSlowSpeed] = useState(3)
+
   const [turnuva, setTurnuva] = useState(0)
   const [arrivalTime, setArrivalTime] = useState("")
   const [attackType, setAttackType] = useState("real")
@@ -55,8 +59,7 @@ export default function AttackForm({ villages, onAddAttack }: any) {
   const attacker = villages.find((v: any) => v.id === attackerId)
   const target = villages.find((v: any) => v.id === targetId)
 
-  const selectedTroop = troops[tribe as keyof typeof troops][troopIndex]
-  const baseSpeed = selectedTroop.speed
+  const selectedTroop = troops[tribe][troopIndex]
 
   // 📏 MESAFE
   const calculateDistance = () => {
@@ -66,22 +69,27 @@ export default function AttackForm({ villages, onAddAttack }: any) {
     return Math.sqrt(dx * dx + dy * dy)
   }
 
-  // 🔥 ETKİN HIZ (KUŞATMA YAVAŞ)
-  const getEffectiveSpeed = () => {
-    let finalSpeed = baseSpeed
+  // 🔥 GERÇEK HIZ
+  const getSpeed = () => {
+    let speed = selectedTroop.speed
 
-    // 🔥 KUŞATMA = YAVAŞ (2x süre = yarı hız)
-    if (attackType === "siege") {
-      finalSpeed = baseSpeed / 2
+    // manuel override (multi-unit simülasyonu)
+    if (useSlowest) {
+      speed = Math.min(speed, manualSlowSpeed)
     }
 
-    return finalSpeed
+    // kuşatma yavaş
+    if (attackType === "siege") {
+      speed = speed / 2
+    }
+
+    return speed
   }
 
   // ⏱️ SÜRE
   const calculateTime = () => {
     const distance = calculateDistance()
-    const speed = getEffectiveSpeed()
+    const speed = getSpeed()
 
     if (!distance || !speed) return 0
 
@@ -112,7 +120,6 @@ export default function AttackForm({ villages, onAddAttack }: any) {
       attacker: attacker.name,
       target: target.name,
       troop: selectedTroop.name,
-      speed: baseSpeed,
       type: attackType,
       distance,
       duration,
@@ -140,14 +147,14 @@ export default function AttackForm({ villages, onAddAttack }: any) {
           ))}
         </select>
 
-        <select onChange={e => setTribe(e.target.value)}>
+        <select onChange={e => setTribe(e.target.value as any)}>
           <option value="roma">Roma</option>
           <option value="cermen">Cermen</option>
           <option value="galya">Galya</option>
         </select>
 
         <select onChange={e => setTroopIndex(Number(e.target.value))}>
-          {troops[tribe as keyof typeof troops].map((t, i) => (
+          {troops[tribe].map((t, i) => (
             <option key={i} value={i}>
               {t.name} ({t.speed})
             </option>
@@ -159,6 +166,25 @@ export default function AttackForm({ villages, onAddAttack }: any) {
           <option value="fake">Fake</option>
           <option value="siege">Kuşatma</option>
         </select>
+
+        {/* 🔥 ADVANCED */}
+        <label style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <input
+            type="checkbox"
+            checked={useSlowest}
+            onChange={e => setUseSlowest(e.target.checked)}
+          />
+          En yavaş birlik var
+        </label>
+
+        {useSlowest && (
+          <input
+            type="number"
+            value={manualSlowSpeed}
+            onChange={e => setManualSlowSpeed(Number(e.target.value))}
+            placeholder="Yavaş hız"
+          />
+        )}
 
         <input
           type="number"
@@ -179,7 +205,7 @@ export default function AttackForm({ villages, onAddAttack }: any) {
       </button>
 
       <div style={{ marginTop: "10px" }}>
-        <p>Hız: {getEffectiveSpeed()}</p>
+        <p>Hız: {getSpeed()}</p>
         <p>Mesafe: {calculateDistance().toFixed(2)}</p>
         <p>Süre: {calculateTime().toFixed(2)} saat</p>
       </div>

@@ -12,7 +12,7 @@ export default function SimulatorLayout() {
   const [attacks, setAttacks] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
 
-  // 🔥 LOAD
+  // LOAD
   useEffect(() => {
     try {
       const data = localStorage.getItem(STORAGE_KEY)
@@ -20,13 +20,13 @@ export default function SimulatorLayout() {
         setAttacks(JSON.parse(data))
       }
     } catch (e) {
-      console.error("Attack load error", e)
+      console.error("load error", e)
     } finally {
       setLoaded(true)
     }
   }, [])
 
-  // 🔥 SAVE
+  // SAVE
   useEffect(() => {
     if (!loaded) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(attacks))
@@ -36,15 +36,42 @@ export default function SimulatorLayout() {
     setAttacks(prev => [...prev, attack])
   }
 
+  // 🔥 SENKRON MOTORU
+  const handleSync = (arrival: string) => {
+    if (!arrival) return alert("Varış zamanı seç")
+
+    const arrivalDate = new Date(arrival)
+
+    const updated = attacks.map(a => {
+      const departureDate = new Date(
+        arrivalDate.getTime() - a.duration * 3600 * 1000
+      )
+
+      return {
+        ...a,
+        arrival: arrivalDate.toLocaleString(),
+        departure: departureDate.toLocaleString()
+      }
+    })
+
+    setAttacks(updated)
+  }
+
   return (
     <div>
       <h2>⚔️ Saldırı Planlayıcı</h2>
 
       <VillageManager onChange={setVillages} />
 
-      <AttackForm villages={villages} onAddAttack={handleAddAttack} />
+      <AttackForm
+        villages={villages}
+        onAddAttack={handleAddAttack}
+      />
 
-      <AttackTable attacks={attacks} />
+      <AttackTable
+        attacks={attacks}
+        onSync={handleSync}
+      />
     </div>
   )
 }

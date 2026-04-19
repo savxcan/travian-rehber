@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-
 type Attack = {
   id: number
   attacker: string
@@ -12,55 +10,12 @@ type Attack = {
   departure: string
 }
 
-export default function AttackTable() {
-  const [attacks, setAttacks] = useState<Attack[]>([])
-  const [arrivalInput, setArrivalInput] = useState("")
-
-  const addAttack = () => {
-    if (!arrivalInput) {
-      alert("Varış zamanı gir")
-      return
-    }
-
-    // TEST verisi (şimdilik)
-    const distance = 30
-    const duration = 5 // saat
-
-    const arrivalDate = new Date(arrivalInput)
-    const departureDate = new Date(arrivalDate.getTime() - duration * 3600 * 1000)
-
-    const newAttack: Attack = {
-      id: Date.now(),
-      attacker: "Köy A",
-      target: "Köy B",
-      distance,
-      duration,
-      arrival: arrivalDate.toLocaleString(),
-      departure: departureDate.toLocaleString()
-    }
-
-    setAttacks(prev => [...prev, newAttack])
-  }
-
+export default function AttackTable({ attacks }: { attacks: Attack[] }) {
   return (
-    <div style={{marginTop: "40px"}}>
+    <div style={{ marginTop: "40px" }}>
       <h3>📋 Saldırı Listesi</h3>
 
-      {/* INPUT */}
-      <div style={{marginBottom: "10px"}}>
-        <input
-          type="datetime-local"
-          value={arrivalInput}
-          onChange={e => setArrivalInput(e.target.value)}
-        />
-
-        <button className="btn" onClick={addAttack} style={{marginLeft: "10px"}}>
-          Saldırı Ekle
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <table style={{width: "100%", marginTop: "10px"}}>
+      <table style={{ width: "100%" }}>
         <thead>
           <tr>
             <th>#</th>

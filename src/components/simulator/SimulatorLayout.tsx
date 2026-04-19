@@ -7,6 +7,11 @@ import AttackTable from "./AttackTable"
 
 export default function SimulatorLayout() {
   const [villages, setVillages] = useState([])
+  const [attacks, setAttacks] = useState<any[]>([])
+
+  const handleAddAttack = (attack: any) => {
+    setAttacks(prev => [...prev, attack])
+  }
 
   return (
     <div>
@@ -14,9 +19,9 @@ export default function SimulatorLayout() {
 
       <VillageManager onChange={setVillages} />
 
-      <AttackForm villages={villages} />
+      <AttackForm villages={villages} onAddAttack={handleAddAttack} />
 
-      <AttackTable />
+      <AttackTable attacks={attacks} />
     </div>
   )
 }

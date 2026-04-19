@@ -9,7 +9,6 @@ export default function AttackTable({ attacks, onSync }: any) {
     <div style={{ marginTop: "40px" }}>
       <h3>📋 Saldırı Listesi</h3>
 
-      {/* 🔥 SENKRON PANEL */}
       <div style={{ marginBottom: "10px" }}>
         <input
           type="datetime-local"
@@ -17,20 +16,16 @@ export default function AttackTable({ attacks, onSync }: any) {
           onChange={e => setGlobalArrival(e.target.value)}
         />
 
-        <button
-          className="btn"
-          onClick={() => onSync(globalArrival)}
-          style={{ marginLeft: "10px" }}
-        >
+        <button className="btn" onClick={() => onSync(globalArrival)}>
           Senkronla
         </button>
       </div>
 
-      {/* TABLO */}
       <table style={{ width: "100%", tableLayout: "fixed" }}>
         <thead>
           <tr>
             <th>#</th>
+            <th>Tip</th>
             <th>Saldıran</th>
             <th>Hedef</th>
             <th>Asker</th>
@@ -43,8 +38,25 @@ export default function AttackTable({ attacks, onSync }: any) {
 
         <tbody>
           {attacks.map((a: any, i: number) => (
-            <tr key={a.id}>
+            <tr
+              key={a.id}
+              style={{
+                background:
+                  a.type === "real"
+                    ? "rgba(46, 204, 113, 0.1)"
+                    : a.type === "fake"
+                    ? "rgba(241, 196, 15, 0.1)"
+                    : "rgba(231, 76, 60, 0.1)"
+              }}
+            >
               <td>{i + 1}</td>
+
+              <td>
+                {a.type === "real" && "🟢 Gerçek"}
+                {a.type === "fake" && "🟡 Fake"}
+                {a.type === "siege" && "🔴 Kuşatma"}
+              </td>
+
               <td>{a.attacker}</td>
               <td>{a.target}</td>
               <td>{a.troop}</td>

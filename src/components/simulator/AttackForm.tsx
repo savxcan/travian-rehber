@@ -10,7 +10,6 @@ type Village = {
   type: "saldiran" | "hedef"
 }
 
-// 🔥 TÜM ASKER HIZLARI (DOĞRU SEKTÖR)
 const troops = {
   roma: [
     { name: "Lejyoner", speed: 6 },
@@ -22,7 +21,6 @@ const troops = {
     { name: "Koç Başı", speed: 4 },
     { name: "Mancınık", speed: 3 }
   ],
-
   cermen: [
     { name: "Tokmak", speed: 7 },
     { name: "Mızrakçı", speed: 7 },
@@ -33,7 +31,6 @@ const troops = {
     { name: "Koç Başı", speed: 4 },
     { name: "Mancınık", speed: 3 }
   ],
-
   galya: [
     { name: "Falanks", speed: 7 },
     { name: "Kılıçlı", speed: 6 },
@@ -46,24 +43,22 @@ const troops = {
   ]
 }
 
-export default function AttackForm({
-  villages,
-  onAddAttack
-}: any) {
-
+export default function AttackForm({ villages, onAddAttack }: any) {
   const [attackerId, setAttackerId] = useState<number | null>(null)
   const [targetId, setTargetId] = useState<number | null>(null)
-  const [tribe, setTribe] = useState<"roma" | "cermen" | "galya">("roma")
+  const [tribe, setTribe] = useState("roma")
   const [troopIndex, setTroopIndex] = useState(0)
   const [turnuva, setTurnuva] = useState(0)
   const [arrivalTime, setArrivalTime] = useState("")
+  const [attackType, setAttackType] = useState("real")
 
   const attacker = villages.find((v: any) => v.id === attackerId)
   const target = villages.find((v: any) => v.id === targetId)
 
-  const selectedTroop = troops[tribe][troopIndex]
-  const speed = selectedTroop.speed
+  const selectedTroop = troops[tribe as keyof typeof troops][troopIndex]
+  const baseSpeed = selectedTroop.speed
 
+  // 📏 MESAFE
   const calculateDistance = () => {
     if (!attacker || !target) return 0
     const dx = attacker.x - target.x
@@ -71,8 +66,24 @@ export default function AttackForm({
     return Math.sqrt(dx * dx + dy * dy)
   }
 
+  // 🔥 ETKİN HIZ (KUŞATMA YAVAŞ)
+  const getEffectiveSpeed = () => {
+    let finalSpeed = baseSpeed
+
+    // 🔥 KUŞATMA = YAVAŞ (2x süre = yarı hız)
+    if (attackType === "siege") {
+      finalSpeed = baseSpeed / 2
+    }
+
+    return finalSpeed
+  }
+
+  // ⏱️ SÜRE
   const calculateTime = () => {
     const distance = calculateDistance()
+    const speed = getEffectiveSpeed()
+
+    if (!distance || !speed) return 0
 
     if (distance <= 20) {
       return distance / speed
@@ -84,39 +95,37 @@ export default function AttackForm({
     }
   }
 
-const addAttack = () => {
-  if (!attacker || !target) return alert("Köy seç")
-  if (!arrivalTime) return alert("Varış zamanı gir")
+  const addAttack = () => {
+    if (!attacker || !target) return alert("Köy seç")
+    if (!arrivalTime) return alert("Varış zamanı gir")
 
-  const distance = calculateDistance()
-  const duration = calculateTime()
+    const distance = calculateDistance()
+    const duration = calculateTime()
 
-  const arrivalDate = new Date(arrivalTime)
+    const arrivalDate = new Date(arrivalTime)
+    const departureDate = new Date(
+      arrivalDate.getTime() - duration * 3600 * 1000
+    )
 
-  const departureDate = new Date(
-    arrivalDate.getTime() - duration * 3600 * 1000
-  )
-
-  onAddAttack({
-    id: Date.now(),
-    attacker: attacker.name,
-    target: target.name,
-    troop: selectedTroop.name,
-    speed,
-    distance,
-    duration,
-    arrival: arrivalDate.toLocaleString(),
-    departure: departureDate.toLocaleString()
-  })
-}
+    onAddAttack({
+      id: Date.now(),
+      attacker: attacker.name,
+      target: target.name,
+      troop: selectedTroop.name,
+      speed: baseSpeed,
+      type: attackType,
+      distance,
+      duration,
+      arrival: arrivalDate.toLocaleString(),
+      departure: departureDate.toLocaleString()
+    })
+  }
 
   return (
     <div style={{ marginTop: "30px" }}>
       <h3>⚔️ Saldırı Oluştur</h3>
 
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-
-        {/* KÖYLER */}
         <select onChange={e => setAttackerId(Number(e.target.value))}>
           <option>-- Saldıran --</option>
           {villages.filter((v: any) => v.type === "saldiran").map((v: any) => (
@@ -131,30 +140,34 @@ const addAttack = () => {
           ))}
         </select>
 
-        {/* KABİLE */}
-        <select onChange={e => setTribe(e.target.value as any)}>
+        <select onChange={e => setTribe(e.target.value)}>
           <option value="roma">Roma</option>
           <option value="cermen">Cermen</option>
           <option value="galya">Galya</option>
         </select>
 
-        {/* ASKER */}
         <select onChange={e => setTroopIndex(Number(e.target.value))}>
-          {troops[tribe].map((t, i) => (
+          {troops[tribe as keyof typeof troops].map((t, i) => (
             <option key={i} value={i}>
               {t.name} ({t.speed})
             </option>
           ))}
         </select>
 
-        {/* TURNUVA */}
+        <select onChange={e => setAttackType(e.target.value)}>
+          <option value="real">Gerçek</option>
+          <option value="fake">Fake</option>
+          <option value="siege">Kuşatma</option>
+        </select>
+
         <input
           type="number"
           value={turnuva}
           onChange={e => setTurnuva(Number(e.target.value))}
           placeholder="Turnuva"
         />
-		<input
+
+        <input
           type="datetime-local"
           value={arrivalTime}
           onChange={e => setArrivalTime(e.target.value)}
@@ -166,7 +179,7 @@ const addAttack = () => {
       </button>
 
       <div style={{ marginTop: "10px" }}>
-        <p>Hız: {speed}</p>
+        <p>Hız: {getEffectiveSpeed()}</p>
         <p>Mesafe: {calculateDistance().toFixed(2)}</p>
         <p>Süre: {calculateTime().toFixed(2)} saat</p>
       </div>

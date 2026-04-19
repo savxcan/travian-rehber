@@ -10,30 +10,40 @@ type Village = {
   type: "saldiran" | "hedef"
 }
 
-const STORAGE_KEY = "travian_villages"
+const STORAGE_KEY = "travian_villages_v1"
 
 export default function VillageManager({ onChange }: { onChange?: (v: Village[]) => void }) {
   const [villages, setVillages] = useState<Village[]>([])
+  const [loaded, setLoaded] = useState(false)
+
   const [name, setName] = useState("")
   const [x, setX] = useState("")
   const [y, setY] = useState("")
   const [type, setType] = useState<"saldiran" | "hedef">("saldiran")
 
-  // 🔥 LOAD (sayfa açıldığında)
+  // 🔥 LOAD (SADECE 1 KEZ)
   useEffect(() => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) {
-      const parsed = JSON.parse(data)
-      setVillages(parsed)
-      onChange && onChange(parsed) // dışarıya veri gönder
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      if (data) {
+        const parsed = JSON.parse(data)
+        setVillages(parsed)
+        onChange && onChange(parsed)
+      }
+    } catch (e) {
+      console.error("LocalStorage load error", e)
+    } finally {
+      setLoaded(true)
     }
   }, [])
 
-  // 🔥 SAVE + dışarı gönder
+  // 🔥 SAVE (SADECE LOAD SONRASI)
   useEffect(() => {
+    if (!loaded) return
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(villages))
     onChange && onChange(villages)
-  }, [villages])
+  }, [villages, loaded])
 
   const addVillage = () => {
     if (!name || !x || !y) {
@@ -51,7 +61,6 @@ export default function VillageManager({ onChange }: { onChange?: (v: Village[])
 
     setVillages(prev => [...prev, newVillage])
 
-    // form temizle
     setName("")
     setX("")
     setY("")
@@ -65,82 +74,36 @@ export default function VillageManager({ onChange }: { onChange?: (v: Village[])
     <div style={{ marginTop: "20px" }}>
       <h3>🏘️ Köy Yönetimi</h3>
 
-      {/* FORM */}
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-          marginTop: "10px"
-        }}
-      >
-        <input
-          placeholder="İsim"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
+      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <input placeholder="İsim" value={name} onChange={e => setName(e.target.value)} />
+        <input placeholder="X" value={x} onChange={e => setX(e.target.value)} />
+        <input placeholder="Y" value={y} onChange={e => setY(e.target.value)} />
 
-        <input
-          placeholder="X"
-          value={x}
-          onChange={e => setX(e.target.value)}
-        />
-
-        <input
-          placeholder="Y"
-          value={y}
-          onChange={e => setY(e.target.value)}
-        />
-
-        <select
-          value={type}
-          onChange={e => setType(e.target.value as "saldiran" | "hedef")}
-        >
+        <select value={type} onChange={e => setType(e.target.value as any)}>
           <option value="saldiran">Saldıran</option>
           <option value="hedef">Hedef</option>
         </select>
 
-        <button className="btn" onClick={addVillage}>
-          Ekle
-        </button>
+        <button className="btn" onClick={addVillage}>Ekle</button>
       </div>
 
-      {/* LİSTE */}
       <div style={{ marginTop: "20px" }}>
-        {villages.length === 0 && (
-          <p style={{ color: "#888" }}>Henüz köy eklenmedi</p>
-        )}
+        {villages.length === 0 && <p style={{ color: "#888" }}>Kayıtlı köy yok</p>}
 
         {villages.map(v => (
-          <div
-            key={v.id}
-            style={{
-              background: "#111827",
-              padding: "10px",
-              borderRadius: "10px",
-              marginBottom: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}
-          >
+          <div key={v.id} style={{
+            background: "#111827",
+            padding: "10px",
+            borderRadius: "10px",
+            marginBottom: "10px",
+            display: "flex",
+            justifyContent: "space-between"
+          }}>
             <span>
               {v.name} ({v.x}|{v.y}) - {v.type}
             </span>
 
-            <button
-              onClick={() => deleteVillage(v.id)}
-              style={{
-                background: "#c0392b",
-                border: "none",
-                color: "white",
-                padding: "5px 10px",
-                borderRadius: "6px",
-                cursor: "pointer"
-              }}
-            >
-              Sil
-            </button>
+            <button onClick={() => deleteVillage(v.id)}>Sil</button>
           </div>
         ))}
       </div>

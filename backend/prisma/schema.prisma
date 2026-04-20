@@ -13,5 +13,13 @@ model User {
   password String
   server   String
   nickname String
-  role     String @default("USER") // USER | ADMIN | EDITOR
+  role     String @default("USER")
+}
+
+model Guide {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  category  String
+  createdAt DateTime @default(now())
 }

@@ -1,25 +1,26 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { apiGetGuides } from "../lib/api"
 
-export default function Home() {
-  const router = useRouter()
+export default function Guides() {
+  const [data, setData] = useState<any[]>([])
+
+  useEffect(() => {
+    apiGetGuides().then(setData)
+  }, [])
 
   return (
-    <main style={{ textAlign: "center", padding: "100px" }}>
-      <h1>⚔️ TRAVIAN PRO</h1>
+    <div style={{ padding: 20 }}>
+      <h2>Rehberler</h2>
 
-      <p>
-        Travian Kingdoms için en hızlı köy kurma ve saldırı planlama sistemi
-      </p>
-
-      <button
-        className="btn"
-        onClick={() => router.push("/auth")}
-        style={{ marginTop: "20px" }}
-      >
-        Başla
-      </button>
-    </main>
+      {data.map(g => (
+        <div key={g.id}>
+          <h3>{g.title}</h3>
+          <p>{g.content}</p>
+          <small>{g.category}</small>
+        </div>
+      ))}
+    </div>
   )
 }

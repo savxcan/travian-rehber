@@ -1,29 +1,22 @@
-const API_URL = "http://localhost:5000"
+const API = "http://localhost:5000"
 
-// 🔧 GENEL REQUEST HELPER
-async function request(path: string, options: RequestInit = {}) {
+async function request(path: string, options: any = {}) {
   const token = typeof window !== "undefined"
     ? localStorage.getItem("token")
     : null
 
-  const headers: any = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  }
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
-  }
-
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(API + path, {
     ...options,
-    headers
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {})
+    }
   })
 
   const data = await res.json()
 
   if (!res.ok) {
-    throw new Error(data.error || "API hatası")
+    throw new Error(data.error || "API hata")
   }
 
   return data
@@ -31,55 +24,57 @@ async function request(path: string, options: RequestInit = {}) {
 
 // 🔐 LOGIN
 export async function apiLogin(email: string, password: string) {
-  const data = await request("/login", {
+  const d = await request("/login", {
     method: "POST",
     body: JSON.stringify({ email, password })
   })
 
-  localStorage.setItem("token", data.token)
-  localStorage.setItem("user", JSON.stringify(data.user))
+  localStorage.setItem("token", d.token)
+  localStorage.setItem("user", JSON.stringify(d.user))
 
-  return data.user
+  return d.user
 }
 
 // 📝 REGISTER
-export async function apiRegister(
-  email: string,
-  password: string,
-  server: string,
-  nickname: string
-) {
-  const data = await request("/register", {
+export async function apiRegister(e: string, p: string, s: string, n: string) {
+  const d = await request("/register", {
     method: "POST",
-    body: JSON.stringify({ email, password, server, nickname })
+    body: JSON.stringify({ email: e, password: p, server: s, nickname: n })
   })
 
-  localStorage.setItem("token", data.token)
-  localStorage.setItem("user", JSON.stringify(data.user))
+  localStorage.setItem("token", d.token)
+  localStorage.setItem("user", JSON.stringify(d.user))
 
-  return data.user
+  return d.user
 }
 
-// 🔒 CURRENT USER (TOKEN TEST)
+// 👤 ME
 export async function apiMe() {
-  return await request("/me")
+  return request("/me")
 }
 
-// 🚪 LOGOUT
-export function apiLogout() {
-  localStorage.removeItem("token")
-  localStorage.removeItem("user")
-}
-
-// 👥 ADMIN - TÜM KULLANICILAR
+// 👥 USERS
 export async function apiGetUsers() {
-  return await request("/admin/users")
+  return request("/admin/users")
 }
 
-// 🔄 ADMIN - ROLE GÜNCELLE
-export async function apiUpdateRole(userId: number, role: string) {
-  return await request("/admin/role", {
+// 🔄 ROLE
+export async function apiUpdateRole(id: number, role: string) {
+  return request("/admin/role", {
     method: "POST",
-    body: JSON.stringify({ userId, role })
+    body: JSON.stringify({ userId: id, role })
   })
+}
+
+// 📚 CREATE GUIDE
+export async function apiCreateGuide(t: string, c: string, cat: string) {
+  return request("/admin/guide", {
+    method: "POST",
+    body: JSON.stringify({ title: t, content: c, category: cat })
+  })
+}
+
+// 📚 GET GUIDES
+export async function apiGetGuides() {
+  return request("/guides")
 }

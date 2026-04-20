@@ -3,19 +3,23 @@ const cors = require("cors")
 const { PrismaClient } = require("@prisma/client")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-
 require("dotenv").config()
 
 const app = express()
 const prisma = new PrismaClient()
 
-app.use(cors())
+// ✅ CORS FIX (çok önemli)
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}))
+
 app.use(express.json())
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret"
 const TOKEN_EXPIRES = process.env.TOKEN_EXPIRES || "7d"
 
-// 🔥 HEALTH
+// 🧪 HEALTH CHECK
 app.get("/", (req, res) => {
   res.send("Backend çalışıyor 🚀")
 })
@@ -23,7 +27,11 @@ app.get("/", (req, res) => {
 // 🔐 TOKEN OLUŞTUR
 function generateToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    },
     JWT_SECRET,
     { expiresIn: TOKEN_EXPIRES }
   )
@@ -48,7 +56,15 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// 📝 REGISTER (HASH)
+// 👑 ADMIN MIDDLEWARE
+function adminOnly(req, res, next) {
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ error: "Yetkisiz" })
+  }
+  next()
+}
+
+// 📝 REGISTER
 app.post("/register", async (req, res) => {
   const { email, password, server, nickname } = req.body
 
@@ -64,7 +80,8 @@ app.post("/register", async (req, res) => {
         email,
         password: hashed,
         server,
-        nickname
+        nickname,
+        role: "USER"
       }
     })
 
@@ -75,7 +92,8 @@ app.post("/register", async (req, res) => {
         id: user.id,
         email: user.email,
         server: user.server,
-        nickname: user.nickname
+        nickname: user.nickname,
+        role: user.role
       },
       token
     })
@@ -84,7 +102,7 @@ app.post("/register", async (req, res) => {
   }
 })
 
-// 🔐 LOGIN (HASH KONTROL)
+// 🔐 LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body
 
@@ -109,13 +127,14 @@ app.post("/login", async (req, res) => {
       id: user.id,
       email: user.email,
       server: user.server,
-      nickname: user.nickname
+      nickname: user.nickname,
+      role: user.role
     },
     token
   })
 })
 
-// 🔒 KORUMALI ROUTE (TEST)
+// 🔒 ME (TEST)
 app.get("/me", authMiddleware, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id }
@@ -125,10 +144,39 @@ app.get("/me", authMiddleware, async (req, res) => {
     id: user.id,
     email: user.email,
     server: user.server,
-    nickname: user.nickname
+    nickname: user.nickname,
+    role: user.role
   })
 })
 
+// 👥 ADMIN - USERS
+app.get("/admin/users", authMiddleware, adminOnly, async (req, res) => {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      server: true,
+      role: true
+    }
+  })
+
+  res.json(users)
+})
+
+// 🔄 ADMIN - ROLE UPDATE
+app.post("/admin/role", authMiddleware, adminOnly, async (req, res) => {
+  const { userId, role } = req.body
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role }
+  })
+
+  res.json({ success: true })
+})
+
+// 🚀 SERVER START
 app.listen(5000, () => {
   console.log("Backend çalışıyor: http://localhost:5000")
 })

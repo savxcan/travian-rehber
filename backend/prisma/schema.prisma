@@ -13,4 +13,5 @@ model User {
   password String
   server   String
   nickname String
+  role     String @default("USER") // USER | ADMIN | EDITOR
 }

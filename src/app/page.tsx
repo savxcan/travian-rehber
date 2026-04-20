@@ -6,18 +6,20 @@ export default function Home() {
   const router = useRouter()
 
   return (
-    <main>
-      <h2>📌 Hoşgeldin</h2>
+    <main style={{ textAlign: "center", padding: "100px" }}>
+      <h1>⚔️ TRAVIAN PRO</h1>
 
       <p>
-        Travian Kingdoms için en hızlı köy kurma ve saldırı planlama rehberi.
+        Travian Kingdoms için en hızlı köy kurma ve saldırı planlama sistemi
       </p>
 
-      <div style={{marginTop: "20px"}}>
-        <button className="btn" onClick={() => router.push("/simulator")}>
-          ⚔️ Simülatöre Git
-        </button>
-      </div>
+      <button
+        className="btn"
+        onClick={() => router.push("/auth")}
+        style={{ marginTop: "20px" }}
+      >
+        Başla
+      </button>
     </main>
   )
 }

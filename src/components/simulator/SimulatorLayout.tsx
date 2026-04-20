@@ -5,8 +5,6 @@ import VillageManager from "./VillageManager"
 import AttackForm from "./AttackForm"
 import AttackTable from "./AttackTable"
 import Intro from "../Intro"
-import Auth from "../Auth"
-import { getUser, logout } from "../../lib/auth"
 
 const STORAGE_KEY = "travian_attacks_v1"
 
@@ -27,10 +25,20 @@ export default function SimulatorLayout() {
   const [villages, setVillages] = useState<any[]>([])
   const [attacks, setAttacks] = useState<Attack[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [showIntro, setShowIntro] = useState(false)
 
-  // 🔥 SAFE DATE PARSER
+  // 🔐 USER LOAD (sadece görüntü için)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("user")
+      if (stored) {
+        setUser(JSON.parse(stored))
+      }
+    }
+  }, [])
+
+  // 🔥 DATE PARSER (TIME FIX)
   const parseLocalDate = (value: string) => {
     if (!value) return new Date()
 
@@ -40,15 +48,6 @@ export default function SimulatorLayout() {
 
     return new Date(year, month - 1, day, hour, minute)
   }
-
-  // 🔐 USER LOAD
-  useEffect(() => {
-    const u = getUser()
-    if (u) {
-      setUser(u)
-      setShowIntro(true) // login varsa intro aç
-    }
-  }, [])
 
   // 💾 ATTACK LOAD
   useEffect(() => {
@@ -70,7 +69,7 @@ export default function SimulatorLayout() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(attacks))
   }, [attacks, loaded])
 
-  // ➕ ADD
+  // ➕ ADD ATTACK
   const handleAddAttack = (attack: Attack) => {
     setAttacks(prev => [...prev, attack])
   }
@@ -80,7 +79,7 @@ export default function SimulatorLayout() {
     setAttacks(prev => prev.filter(a => a.id !== id))
   }
 
-  // 🔥 SYNC
+  // 🔄 SYNC
   const handleSync = (arrival: string) => {
     if (!arrival) return alert("Varış zamanı seç")
 
@@ -99,11 +98,6 @@ export default function SimulatorLayout() {
     })
 
     setAttacks(updated)
-  }
-
-  // 🔒 LOGIN CONTROL
-  if (!user) {
-    return <Auth onLogin={() => setUser(getUser())} />
   }
 
   return (
@@ -126,13 +120,13 @@ export default function SimulatorLayout() {
         <h2>⚔️ Saldırı Planlayıcı</h2>
 
         <div>
-          {user.nickname} ({user.server})
+          {user ? `${user.nickname} (${user.server})` : "Misafir"}
 
           <button
             className="btn-danger"
             onClick={() => {
-              logout()
-              location.reload()
+              localStorage.removeItem("user")
+              window.location.href = "/auth"
             }}
             style={{ marginLeft: "10px" }}
           >
@@ -144,13 +138,16 @@ export default function SimulatorLayout() {
       {/* 🔥 MAIN */}
       <div className="grid">
 
+        {/* 🏘️ Köy Yönetimi */}
         <VillageManager onChange={setVillages} />
 
+        {/* ⚔️ Saldırı Form */}
         <AttackForm
           villages={villages}
           onAddAttack={handleAddAttack}
         />
 
+        {/* 📋 Liste */}
         <AttackTable
           attacks={attacks}
           onDelete={handleDelete}

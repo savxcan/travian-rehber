@@ -1,0 +1,134 @@
+const express = require("express")
+const cors = require("cors")
+const { PrismaClient } = require("@prisma/client")
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+
+require("dotenv").config()
+
+const app = express()
+const prisma = new PrismaClient()
+
+app.use(cors())
+app.use(express.json())
+
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret"
+const TOKEN_EXPIRES = process.env.TOKEN_EXPIRES || "7d"
+
+// 🔥 HEALTH
+app.get("/", (req, res) => {
+  res.send("Backend çalışıyor 🚀")
+})
+
+// 🔐 TOKEN OLUŞTUR
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: TOKEN_EXPIRES }
+  )
+}
+
+// 🔒 AUTH MIDDLEWARE
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token yok" })
+  }
+
+  const token = authHeader.split(" ")[1]
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    req.user = decoded
+    next()
+  } catch (err) {
+    return res.status(401).json({ error: "Geçersiz token" })
+  }
+}
+
+// 📝 REGISTER (HASH)
+app.post("/register", async (req, res) => {
+  const { email, password, server, nickname } = req.body
+
+  if (!email || !password || !server || !nickname) {
+    return res.status(400).json({ error: "Eksik alan" })
+  }
+
+  try {
+    const hashed = await bcrypt.hash(password, 10)
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashed,
+        server,
+        nickname
+      }
+    })
+
+    const token = generateToken(user)
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        server: user.server,
+        nickname: user.nickname
+      },
+      token
+    })
+  } catch (err) {
+    res.status(400).json({ error: "Email zaten kayıtlı" })
+  }
+})
+
+// 🔐 LOGIN (HASH KONTROL)
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body
+
+  const user = await prisma.user.findUnique({
+    where: { email }
+  })
+
+  if (!user) {
+    return res.status(401).json({ error: "Kullanıcı bulunamadı" })
+  }
+
+  const match = await bcrypt.compare(password, user.password)
+
+  if (!match) {
+    return res.status(401).json({ error: "Şifre yanlış" })
+  }
+
+  const token = generateToken(user)
+
+  res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      server: user.server,
+      nickname: user.nickname
+    },
+    token
+  })
+})
+
+// 🔒 KORUMALI ROUTE (TEST)
+app.get("/me", authMiddleware, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id }
+  })
+
+  res.json({
+    id: user.id,
+    email: user.email,
+    server: user.server,
+    nickname: user.nickname
+  })
+})
+
+app.listen(5000, () => {
+  console.log("Backend çalışıyor: http://localhost:5000")
+})

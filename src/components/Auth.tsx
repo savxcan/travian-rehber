@@ -1,47 +1,44 @@
 "use client"
 
 import { useState } from "react"
-import { login, register } from "../lib/auth"
+import { apiLogin, apiRegister } from "../lib/api"
 
-export default function Auth({ onLogin }: { onLogin: () => void }) {
+export default function Auth({ onLogin }: { onLogin: (user: any) => void }) {
   const [isLogin, setIsLogin] = useState(true)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [server, setServer] = useState("tr1")
   const [nickname, setNickname] = useState("")
-
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email || !password) {
       return alert("Email ve şifre zorunlu")
     }
 
     if (!isLogin && (!server || !nickname)) {
-      return alert("Server ve avatar adı zorunlu")
+      return alert("Server ve isim zorunlu")
     }
 
     try {
       setLoading(true)
 
-      if (isLogin) {
-        login(email, password)
-      } else {
-        register({
-          email,
-          password,
-          server,
-          nickname
-        })
+      let user
 
-        // kayıt sonrası direkt login
-        login(email, password)
+      if (isLogin) {
+        user = await apiLogin(email, password)
+      } else {
+        await apiRegister(email, password, server, nickname)
+        user = await apiLogin(email, password)
       }
 
-      onLogin()
+      // 🔥 SESSION
+      localStorage.setItem("user", JSON.stringify(user))
+
+      onLogin(user)
     } catch (err: any) {
-      alert(err.message)
+      alert(err.message || "Hata oluştu")
     } finally {
       setLoading(false)
     }
@@ -50,17 +47,12 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
   return (
     <div
       className="card"
-      style={{
-        maxWidth: "420px",
-        margin: "120px auto",
-        textAlign: "center"
-      }}
+      style={{ maxWidth: "420px", margin: "120px auto", textAlign: "center" }}
     >
       <h2 style={{ marginBottom: "15px" }}>
         {isLogin ? "🔐 Giriş Yap" : "📝 Kayıt Ol"}
       </h2>
 
-      {/* EMAIL */}
       <input
         placeholder="Email"
         value={email}
@@ -68,7 +60,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         style={{ marginBottom: "10px" }}
       />
 
-      {/* PASSWORD */}
       <input
         type="password"
         placeholder="Şifre"
@@ -77,7 +68,6 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         style={{ marginBottom: "10px" }}
       />
 
-      {/* REGISTER EXTRA */}
       {!isLogin && (
         <>
           <select
@@ -99,27 +89,17 @@ export default function Auth({ onLogin }: { onLogin: () => void }) {
         </>
       )}
 
-      {/* BUTTON */}
       <button
         className="btn"
         onClick={handleSubmit}
         disabled={loading}
         style={{ width: "100%" }}
       >
-        {loading
-          ? "Bekle..."
-          : isLogin
-          ? "Giriş Yap"
-          : "Kayıt Ol"}
+        {loading ? "Bekle..." : isLogin ? "Giriş Yap" : "Kayıt Ol"}
       </button>
 
-      {/* SWITCH */}
       <p
-        style={{
-          marginTop: "12px",
-          cursor: "pointer",
-          opacity: 0.7
-        }}
+        style={{ marginTop: "12px", cursor: "pointer", opacity: 0.7 }}
         onClick={() => setIsLogin(!isLogin)}
       >
         {isLogin

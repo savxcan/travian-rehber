@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useState, useEffect } from "react"
 
-const STORAGE_KEY = "travian_full_villages_v2"
+const STORAGE_KEY = "travian_pro_v3"
 
 // ================= TYPES =================
 type Village = {
@@ -10,22 +10,17 @@ type Village = {
   name: string
   x: number
   y: number
-  type: "saldiran" | "hedef"
+  type: "attacker" | "target"
 }
 
 type Attack = {
   id: number
-  attackerId: number
-  targetId: number
-  attackerName: string
-  targetName: string
-  troop: string
-  speed: number
-  distance: number
-  duration: number // saat
-  type: "real" | "fake" | "siege"
+  attacker: string
+  target: string
   wave: number
-  arrival: string
+  type: string
+  duration: number
+  distance: number
   departure: string
 }
 
@@ -34,145 +29,128 @@ export default function SimulatorLayout() {
 
   const [villages, setVillages] = useState<Village[]>([])
   const [attacks, setAttacks] = useState<Attack[]>([])
-  const [arrivalInput, setArrivalInput] = useState("")
-  const [offsetMin, setOffsetMin] = useState(1)
+  const [arrival, setArrival] = useState("")
+  const [offsetSec, setOffsetSec] = useState(1)
+  const [tsLevel, setTsLevel] = useState(0)
 
   // LOAD
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed && typeof parsed === "object") {
-          if (Array.isArray(parsed.villages)) setVillages(parsed.villages)
-          if (Array.isArray(parsed.attacks)) setAttacks(parsed.attacks)
-        }
-      }
-    } catch (e) {
-      console.error("LOAD ERROR", e)
+    const data = localStorage.getItem(STORAGE_KEY)
+    if (data) {
+      const p = JSON.parse(data)
+      setVillages(p.villages || [])
+      setAttacks(p.attacks || [])
     }
   }, [])
 
   // SAVE
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ villages, attacks }))
-    } catch (e) {
-      console.error("SAVE ERROR", e)
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ villages, attacks }))
   }, [villages, attacks])
 
-  // HELPERS
-  const getVillage = (id: number) => villages.find(v => v.id === id)
+  const distanceCalc = (a: Village, b: Village) =>
+    Math.hypot(a.x - b.x, a.y - b.y)
 
-  const calcDistance = (a: Village, b: Village) => {
-    const dx = a.x - b.x
-    const dy = a.y - b.y
-    return Math.sqrt(dx * dx + dy * dy)
+  // 🔥 TURNOVA SPEED
+  const getSpeed = (distance: number) => {
+    let base = 6
+    if (distance <= 20) return base
+    return base * (1 + tsLevel * 0.2)
   }
 
-  // ADD ATTACK
-  const addAttack = (payload: {
-    attackerId: number
-    targetId: number
-    troop: string
-    speed: number
-    type: Attack["type"]
-    wave: number
-  }) => {
+  // ================= ADD VILLAGE =================
+  const addVillage = (name: string, x: number, y: number, type: any) => {
+    if (!name) return
+    setVillages(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      name, x, y, type
+    }])
+  }
 
-    const attacker = getVillage(payload.attackerId)
-    const target = getVillage(payload.targetId)
+  // ================= PRO WAR =================
+  const generateProWar = (
+    attackerId: number,
+    mainTargetId: number,
+    fakeTargets: number[]
+  ) => {
 
-    if (!attacker || !target) {
-      alert("Attacker ve Target seç")
-      return
+    const attacker = villages.find(v => v.id === attackerId)
+    const main = villages.find(v => v.id === mainTargetId)
+
+    if (!attacker || !main) return alert("Seçim yap")
+
+    const list: Attack[] = []
+
+    const add = (target: Village, wave: number, type: string) => {
+      const d = distanceCalc(attacker, target)
+      const speed = getSpeed(d)
+
+      list.push({
+        id: Date.now() + Math.random(),
+        attacker: attacker.name,
+        target: target.name,
+        wave,
+        type,
+        duration: d / speed,
+        distance: d,
+        departure: ""
+      })
     }
 
-    const distance = calcDistance(attacker, target)
-    const duration = distance / (payload.speed || 1)
+    // ANA HEDEF
+    add(main, 1, "Fake")
+    add(main, 2, "Fake")
+    add(main, 3, "Siege")
+    add(main, 4, "Real")
+    add(main, 5, "Catapult")
+    add(main, 6, "Fake")
+    add(main, 7, "Fake")
 
-    const newAttack: Attack = {
-      id: Date.now(),
-      attackerId: attacker.id,
-      targetId: target.id,
-      attackerName: attacker.name,
-      targetName: target.name,
-      troop: payload.troop || "Troop",
-      speed: payload.speed || 1,
-      distance,
-      duration,
-      type: payload.type,
-      wave: payload.wave || 1,
-      arrival: "",
-      departure: ""
-    }
-
-    setAttacks(prev => [...prev, newAttack])
-  }
-
-  // DELETE ATTACK
-  const deleteAttack = (id: number) => {
-    setAttacks(prev => prev.filter(a => a.id !== id))
-  }
-
-  // SYNC ALL (tek varış)
-  const syncAll = (arrivalStr: string) => {
-    if (!arrivalStr) return
-    const base = new Date(arrivalStr)
-
-    setAttacks(prev =>
-      prev.map(a => ({
-        ...a,
-        arrival: base.toLocaleString(),
-        departure: new Date(
-          base.getTime() - a.duration * 3600 * 1000
-        ).toLocaleString()
-      }))
-    )
-  }
-
-  // TIMELINE (WAVE ENGINE)
-  const runTimeline = () => {
-
-    if (!arrivalInput) return alert("Varış zamanı seç")
-    if (!attacks.length) return alert("Saldırı yok")
-
-    const base = new Date(arrivalInput)
-
-    // group by wave
-    const grouped: Record<number, Attack[]> = {}
-
-    attacks.forEach(a => {
-      const w = a.wave || 1
-      if (!grouped[w]) grouped[w] = []
-      grouped[w].push(a)
+    // FAKE HEDEFLER
+    fakeTargets.forEach(id => {
+      const t = villages.find(v => v.id === id)
+      if (!t) return
+      add(t, 1, "Fake")
     })
 
-    const waves = Object.keys(grouped).map(Number).sort((a, b) => a - b)
+    setAttacks(prev => [...prev, ...list])
+  }
+
+  // ================= PLAN =================
+  const plan = () => {
+
+    if (!arrival) return alert("Zaman seç")
+
+    const base = new Date(arrival)
+
+    const grouped: Record<string, Attack[]> = {}
+
+    attacks.forEach(a => {
+      if (!grouped[a.target]) grouped[a.target] = []
+      grouped[a.target].push(a)
+    })
 
     const result: Attack[] = []
 
-    waves.forEach((w, wi) => {
+    Object.keys(grouped).forEach(target => {
 
-      const sorted = [...grouped[w]].sort((a, b) => b.duration - a.duration)
+      const sorted = [...grouped[target]].sort(
+        (a, b) => b.duration - a.duration
+      )
 
       sorted.forEach((a, i) => {
 
-        const intra = i * offsetMin * 60 * 1000
-        const inter = wi * 1000
+        const offset = i * offsetSec * 1000
 
         const dep = new Date(
           base.getTime()
-          - a.duration * 3600 * 1000
-          - intra
-          - inter
+          - a.duration * 3600000
+          - offset
         )
 
         result.push({
           ...a,
-          arrival: base.toLocaleString(),
-          departure: dep.toLocaleString()
+          departure: dep.toLocaleTimeString()
         })
       })
     })
@@ -182,222 +160,136 @@ export default function SimulatorLayout() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>⚔️ Travian Planner (Village + Wave FULL)</h2>
 
-      <VillageManager villages={villages} setVillages={setVillages} />
+      <h2>🔥 PRO WAR V3 (TS + Siege)</h2>
 
-      <AttackForm villages={villages} onAdd={addAttack} />
+      <VillageForm onAdd={addVillage} />
+      <ProPanel villages={villages} onRun={generateProWar} />
 
+      {/* PLAN */}
       <div style={{ marginTop: 20 }}>
-        <input type="datetime-local" onChange={e => setArrivalInput(e.target.value)} />
-        <input type="number" value={offsetMin} onChange={e => setOffsetMin(Number(e.target.value))} />
-        <button onClick={runTimeline}>Timeline</button>
+        <input type="datetime-local" onChange={e => setArrival(e.target.value)} />
+
+        <input type="number" value={offsetSec} onChange={e => setOffsetSec(Number(e.target.value))} />
+        <span> Offset</span>
+
+        <input type="number" value={tsLevel} onChange={e => setTsLevel(Number(e.target.value))} />
+        <span> TS</span>
+
+        <button onClick={plan}>Planla</button>
       </div>
 
-      <AttackTable attacks={attacks} onDelete={deleteAttack} onSync={syncAll} />
+      {/* TABLE */}
+      <table style={{ width: "100%", marginTop: 20 }}>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tür</th>
+            <th>Saldıran</th>
+            <th>Hedef</th>
+            <th>Turnuva</th>
+            <th>Mesafe</th>
+            <th>Süre</th>
+            <th>Varış</th>
+            <th>Çıkış</th>
+          </tr>
+        </thead>
 
-      <TimelineView attacks={attacks} onUpdate={setAttacks} />
+        <tbody>
+          {attacks.map((a, i) => (
+            <tr key={a.id}>
+              <td>{i + 1}</td>
+              <td>{a.type}</td>
+              <td>{a.attacker}</td>
+              <td>{a.target}</td>
+              <td>{tsLevel}</td>
+              <td>{a.distance.toFixed(2)}</td>
+              <td>{a.duration.toFixed(2)} h</td>
+              <td>{arrival ? new Date(arrival).toLocaleTimeString() : "-"}</td>
+              <td>{a.departure}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
     </div>
   )
 }
 
-// ================= VILLAGE MANAGER =================
-function VillageManager({ villages, setVillages }: any) {
+// ================= PRO PANEL =================
+function ProPanel({ villages, onRun }: any) {
 
-  const [name, setName] = useState("")
-  const [x, setX] = useState(0)
-  const [y, setY] = useState(0)
-  const [type, setType] = useState<"saldiran" | "hedef">("saldiran")
+  const attackers = villages.filter((v:any)=>v.type==="attacker")
+  const targets = villages.filter((v:any)=>v.type==="target")
 
-  const addVillage = () => {
-    if (!name) return alert("İsim gir")
-    setVillages([
-      ...villages,
-      { id: Date.now(), name, x, y, type }
-    ])
-    setName("")
-  }
-
-  const deleteVillage = (id: number) => {
-    setVillages(villages.filter((v: Village) => v.id !== id))
-  }
+  const [attacker, setAttacker] = useState("")
+  const [main, setMain] = useState("")
+  const [fakes, setFakes] = useState<number[]>([])
 
   return (
-    <div style={{ marginBottom: 20 }}>
-      <h3>🏠 Köy Yönetimi</h3>
+    <div>
+      <h3>Pro Savaş</h3>
 
-      <input placeholder="Ad" value={name} onChange={e => setName(e.target.value)} />
-      <input type="number" placeholder="X" onChange={e => setX(Number(e.target.value))} />
-      <input type="number" placeholder="Y" onChange={e => setY(Number(e.target.value))} />
-
-      <select onChange={e => setType(e.target.value as any)}>
-        <option value="saldiran">Saldıran</option>
-        <option value="hedef">Hedef</option>
-      </select>
-
-      <button onClick={addVillage}>Ekle</button>
-
-      <ul>
-        {villages.map((v: Village) => (
-          <li key={v.id}>
-            {v.name} ({v.x}|{v.y}) [{v.type}]
-            <button onClick={() => deleteVillage(v.id)}>X</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-// ================= ATTACK FORM =================
-function AttackForm({ villages, onAdd }: any) {
-
-  const [attackerId, setAttackerId] = useState<number | null>(null)
-  const [targetId, setTargetId] = useState<number | null>(null)
-  const [troop, setTroop] = useState("")
-  const [speed, setSpeed] = useState(6)
-  const [wave, setWave] = useState(1)
-  const [type, setType] = useState<Attack["type"]>("real")
-
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <h3>⚔️ Saldırı</h3>
-
-      <select onChange={e => setAttackerId(Number(e.target.value))}>
-        <option value="">Attacker</option>
-        {villages.filter((v: Village) => v.type === "saldiran").map(v => (
+      <select onChange={e => setAttacker(e.target.value)}>
+        <option>Attacker</option>
+        {attackers.map((v:any)=>(
           <option key={v.id} value={v.id}>{v.name}</option>
         ))}
       </select>
 
-      <select onChange={e => setTargetId(Number(e.target.value))}>
-        <option value="">Target</option>
-        {villages.filter((v: Village) => v.type === "hedef").map(v => (
+      <select onChange={e => setMain(e.target.value)}>
+        <option>Ana hedef</option>
+        {targets.map((v:any)=>(
           <option key={v.id} value={v.id}>{v.name}</option>
         ))}
       </select>
 
-      <input placeholder="Asker" onChange={e => setTroop(e.target.value)} />
-      <input type="number" placeholder="Speed" onChange={e => setSpeed(Number(e.target.value))} />
-      <input type="number" value={wave} onChange={e => setWave(Number(e.target.value))} />
+      {targets.map((v:any)=>(
+        <label key={v.id}>
+          <input type="checkbox"
+            onChange={(e)=>{
+              if(e.target.checked) setFakes([...fakes,v.id])
+              else setFakes(fakes.filter(id=>id!==v.id))
+            }}
+          />
+          {v.name}
+        </label>
+      ))}
 
-      <select onChange={e => setType(e.target.value as any)}>
-        <option value="real">Real</option>
-        <option value="fake">Fake</option>
-        <option value="siege">Siege</option>
-      </select>
-
-      <button
-        onClick={() =>
-          onAdd({
-            attackerId,
-            targetId,
-            troop,
-            speed,
-            wave,
-            type
-          })
-        }
-      >
-        Ekle
+      <button onClick={()=>onRun(Number(attacker), Number(main), fakes)}>
+        🚀 PRO SALDIRI
       </button>
     </div>
   )
 }
 
-// ================= TABLE =================
-function AttackTable({ attacks, onDelete, onSync }: any) {
+// ================= VILLAGE =================
+function VillageForm({ onAdd }: any) {
+
+  const [name,setName]=useState("")
+  const [x,setX]=useState("")
+  const [y,setY]=useState("")
+  const [type,setType]=useState("attacker")
+
   return (
     <div>
-      <h3>📋 Liste</h3>
+      <h3>Köy</h3>
 
-      <input type="datetime-local" onChange={e => onSync(e.target.value)} />
+      <input placeholder="Ad" onChange={e=>setName(e.target.value)} />
+      <input placeholder="X" onChange={e=>setX(e.target.value)} />
+      <input placeholder="Y" onChange={e=>setY(e.target.value)} />
 
-      <table>
-        <thead>
-          <tr>
-            <th>Wave</th>
-            <th>Asker</th>
-            <th>Çıkış</th>
-            <th>Varış</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {attacks.map((a: Attack) => (
-            <tr key={a.id}>
-              <td>{a.wave}</td>
-              <td>{a.troop}</td>
-              <td>{a.departure}</td>
-              <td>{a.arrival}</td>
-              <td><button onClick={() => onDelete(a.id)}>X</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
+      <select onChange={e=>setType(e.target.value)}>
+        <option value="attacker">🟥</option>
+        <option value="target">🟦</option>
+      </select>
 
-// ================= TIMELINE =================
-function TimelineView({ attacks, onUpdate }: any) {
-
-  const [dragId, setDragId] = useState<number | null>(null)
-
-  const valid = attacks.filter((a: Attack) => a.departure)
-  if (!valid.length) return null
-
-  const times = valid.map(a => new Date(a.departure).getTime())
-  const min = Math.min(...times)
-  const max = Math.max(...times)
-  const range = max - min || 1
-
-  const getLeft = (t: number) => ((t - min) / range) * 100
-
-  const handleDrop = (e: any) => {
-    if (!dragId) return
-
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    const newTime = min + percent * range
-
-    onUpdate(
-      attacks.map((a: Attack) =>
-        a.id === dragId
-          ? { ...a, departure: new Date(newTime).toLocaleString() }
-          : a
-      )
-    )
-
-    setDragId(null)
-  }
-
-  return (
-    <div style={{ marginTop: 20 }}>
-      <h3>📊 Timeline</h3>
-
-      <div
-        onMouseUp={handleDrop}
-        style={{ position: "relative", height: 100, borderTop: "2px solid #444" }}
-      >
-        {valid.map(a => {
-          const t = new Date(a.departure).getTime()
-          return (
-            <div
-              key={a.id}
-              draggable
-              onDragStart={() => setDragId(a.id)}
-              style={{
-                position: "absolute",
-                left: `${getLeft(t)}%`,
-                transform: "translateX(-50%)"
-              }}
-            >
-              ● W{a.wave}
-            </div>
-          )
-        })}
-      </div>
+      <button onClick={()=>{
+        onAdd(name, Number(x), Number(y), type)
+        setName(""); setX(""); setY("")
+      }}>
+        Ekle
+      </button>
     </div>
   )
 }

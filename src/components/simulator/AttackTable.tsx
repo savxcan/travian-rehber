@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-
 type Attack = {
   id: number
   attacker: string
@@ -14,102 +12,150 @@ type Attack = {
   departure: string
 }
 
-type Props = {
+export default function AttackTable({
+  attacks,
+  onDelete,
+  onSync
+}: {
   attacks: Attack[]
-  onSync: (arrival: string) => void
   onDelete: (id: number) => void
-}
+  onSync: (arrival: string) => void
+}) {
 
-export default function AttackTable({ attacks, onSync, onDelete }: Props) {
-  const [syncTime, setSyncTime] = useState("")
+  const getTypeColor = (type: string) => {
+    if (type === "real") return "#ff4d4f"
+    if (type === "fake") return "#faad14"
+    if (type === "siege") return "#722ed1"
+    return "#999"
+  }
 
   return (
     <div className="card">
-      <h3>📋 Saldırı Listesi</h3>
 
-      {/* 🔥 SYNC PANEL */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+      <h3 style={{ marginBottom: 10 }}>📋 Saldırı Listesi</h3>
+
+      {/* 🔄 SYNC */}
+      <div style={{
+        display: "flex",
+        gap: 10,
+        marginBottom: 15,
+        alignItems: "center"
+      }}>
         <input
           type="datetime-local"
-          value={syncTime}
-          onChange={(e) => setSyncTime(e.target.value)}
+          onChange={(e) => onSync(e.target.value)}
         />
 
-        <button
-          className="btn"
-          onClick={() => {
-            if (!syncTime) return alert("Varış zamanı seç")
-            onSync(syncTime)
-          }}
-        >
-          Senkronla
-        </button>
+        <span style={{ fontSize: 12, opacity: 0.7 }}>
+          (Tüm saldırıları aynı varışa senkronlar)
+        </span>
       </div>
 
-      {/* 🔥 BOŞ DURUM */}
-      {attacks.length === 0 ? (
-        <p style={{ opacity: 0.6 }}>Henüz saldırı eklenmedi</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      {/* 📊 TABLE */}
+      <div style={{ overflowX: "auto" }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: 14
+        }}>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Tip</th>
-              <th>Saldıran</th>
-              <th>Hedef</th>
-              <th>Asker</th>
-              <th>Mesafe</th>
-              <th>Süre</th>
-              <th>Varış</th>
-              <th>Çıkış</th>
-              <th></th>
+            <tr style={{ borderBottom: "1px solid #333" }}>
+              <th style={th}>Tip</th>
+              <th style={th}>Asker</th>
+              <th style={th}>Çıkış</th>
+              <th style={th}>Varış</th>
+              <th style={th}>Süre</th>
+              <th style={th}>Mesafe</th>
+              <th style={th}></th>
             </tr>
           </thead>
 
           <tbody>
-            {attacks.map((a, i) => (
+            {attacks.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{
+                  textAlign: "center",
+                  padding: 20,
+                  opacity: 0.6
+                }}>
+                  Henüz saldırı yok
+                </td>
+              </tr>
+            )}
+
+            {attacks.map((a) => (
               <tr
                 key={a.id}
                 style={{
-                  textAlign: "center",
-                  background:
-                    a.type === "real"
-                      ? "rgba(46, 204, 113, 0.08)"
-                      : a.type === "fake"
-                      ? "rgba(241, 196, 15, 0.08)"
-                      : "rgba(231, 76, 60, 0.08)"
+                  borderBottom: "1px solid #222"
                 }}
               >
-                <td>{i + 1}</td>
-
-                {/* 🔥 TİP GÖRSEL */}
-                <td>
-                  {a.type === "real" && "🟢"}
-                  {a.type === "fake" && "🟡"}
-                  {a.type === "siege" && "🔴"}
+                {/* TYPE */}
+                <td style={td}>
+                  <span style={{
+                    background: getTypeColor(a.type),
+                    padding: "3px 8px",
+                    borderRadius: 6,
+                    fontSize: 12
+                  }}>
+                    {a.type.toUpperCase()}
+                  </span>
                 </td>
 
-                <td>{a.attacker}</td>
-                <td>{a.target}</td>
-                <td>{a.troop}</td>
-                <td>{a.distance.toFixed(2)}</td>
-                <td>{a.duration.toFixed(2)}h</td>
-                <td>{a.arrival}</td>
-                <td>{a.departure}</td>
+                {/* TROOP */}
+                <td style={td}>{a.troop}</td>
 
-                <td>
+                {/* DEPARTURE */}
+                <td style={td}>
+                  {a.departure || "-"}
+                </td>
+
+                {/* ARRIVAL */}
+                <td style={td}>
+                  {a.arrival || "-"}
+                </td>
+
+                {/* DURATION */}
+                <td style={td}>
+                  {a.duration.toFixed(2)} h
+                </td>
+
+                {/* DISTANCE */}
+                <td style={td}>
+                  {a.distance}
+                </td>
+
+                {/* DELETE */}
+                <td style={td}>
                   <button
-                    className="btn-danger"
                     onClick={() => onDelete(a.id)}
+                    style={{
+                      background: "#ff4d4f",
+                      border: "none",
+                      padding: "5px 8px",
+                      borderRadius: 6,
+                      cursor: "pointer"
+                    }}
                   >
-                    Sil
+                    ❌
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   )
+}
+
+// 🔧 STYLES
+const th: React.CSSProperties = {
+  textAlign: "left",
+  padding: "10px 8px",
+  fontWeight: 500
+}
+
+const td: React.CSSProperties = {
+  padding: "10px 8px"
 }

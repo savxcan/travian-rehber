@@ -2,12 +2,13 @@
 
 type Attack = {
   id: number
-  attacker: string
-  target: string
+  attacker?: string
+  target?: string
   troop: string
   type: "real" | "fake" | "siege"
   distance: number
   duration: number
+  wave: number
   arrival: string
   departure: string
 }
@@ -22,6 +23,7 @@ export default function AttackTable({
   onSync: (arrival: string) => void
 }) {
 
+  // 🎨 TYPE COLOR
   const getTypeColor = (type: string) => {
     if (type === "real") return "#ff4d4f"
     if (type === "fake") return "#faad14"
@@ -30,15 +32,15 @@ export default function AttackTable({
   }
 
   return (
-    <div className="card">
+    <div style={{ marginTop: 20 }}>
 
-      <h3 style={{ marginBottom: 10 }}>📋 Saldırı Listesi</h3>
+      <h3>📋 Saldırı Listesi</h3>
 
       {/* 🔄 SYNC */}
       <div style={{
+        marginBottom: 15,
         display: "flex",
         gap: 10,
-        marginBottom: 15,
         alignItems: "center"
       }}>
         <input
@@ -46,8 +48,8 @@ export default function AttackTable({
           onChange={(e) => onSync(e.target.value)}
         />
 
-        <span style={{ fontSize: 12, opacity: 0.7 }}>
-          (Tüm saldırıları aynı varışa senkronlar)
+        <span style={{ fontSize: 12, opacity: 0.6 }}>
+          (Tüm saldırıları aynı varışa ayarlar)
         </span>
       </div>
 
@@ -55,11 +57,11 @@ export default function AttackTable({
       <div style={{ overflowX: "auto" }}>
         <table style={{
           width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 14
+          borderCollapse: "collapse"
         }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #333" }}>
+              <th style={th}>Wave</th>
               <th style={th}>Tip</th>
               <th style={th}>Asker</th>
               <th style={th}>Çıkış</th>
@@ -73,7 +75,7 @@ export default function AttackTable({
           <tbody>
             {attacks.length === 0 && (
               <tr>
-                <td colSpan={7} style={{
+                <td colSpan={8} style={{
                   textAlign: "center",
                   padding: 20,
                   opacity: 0.6
@@ -86,10 +88,11 @@ export default function AttackTable({
             {attacks.map((a) => (
               <tr
                 key={a.id}
-                style={{
-                  borderBottom: "1px solid #222"
-                }}
+                style={{ borderBottom: "1px solid #222" }}
               >
+                {/* WAVE */}
+                <td style={td}>{a.wave || 1}</td>
+
                 {/* TYPE */}
                 <td style={td}>
                   <span style={{
@@ -122,7 +125,7 @@ export default function AttackTable({
 
                 {/* DISTANCE */}
                 <td style={td}>
-                  {a.distance}
+                  {a.distance.toFixed(2)}
                 </td>
 
                 {/* DELETE */}
@@ -149,7 +152,7 @@ export default function AttackTable({
   )
 }
 
-// 🔧 STYLES
+// 🎨 STYLES
 const th: React.CSSProperties = {
   textAlign: "left",
   padding: "10px 8px",

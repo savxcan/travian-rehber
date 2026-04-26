@@ -10,8 +10,28 @@ type Village = {
   type: "saldiran" | "hedef"
 }
 
-export default function AttackForm({ villages, onAddAttack }: any) {
+type Attack = {
+  id: number
+  attacker: string
+  target: string
+  troop: string
+  type: "real" | "fake" | "siege"
+  distance: number
+  duration: number
+  wave: number
+  arrival: string
+  departure: string
+}
 
+export default function AttackForm({
+  villages,
+  onAddAttack
+}: {
+  villages: Village[]
+  onAddAttack: (attack: Attack) => void
+}) {
+
+  // 🔥 TROOPS
   const troops = {
     roma: [
       { name: "Lejyoner", speed: 6 },
@@ -45,114 +65,109 @@ export default function AttackForm({ villages, onAddAttack }: any) {
     ]
   }
 
-  const [tribe, setTribe] = useState<"roma"|"cermen"|"galya">("roma")
+  // 🔧 STATE
+  const [tribe, setTribe] = useState<"roma" | "cermen" | "galya">("roma")
   const [troopIndex, setTroopIndex] = useState(0)
   const [attackerId, setAttackerId] = useState<number | null>(null)
   const [targetId, setTargetId] = useState<number | null>(null)
-  const [attackType, setAttackType] = useState("real")
-  const [turnuva, setTurnuva] = useState(0)
-  const [arrivalTime, setArrivalTime] = useState("")
+  const [attackType, setAttackType] = useState<"real" | "fake" | "siege">("real")
+  const [wave, setWave] = useState(1)
 
-  const attacker = villages.find((v:Village)=>v.id===attackerId)
-  const target = villages.find((v:Village)=>v.id===targetId)
+  const attacker = villages.find(v => v.id === attackerId)
+  const target = villages.find(v => v.id === targetId)
   const troop = troops[tribe][troopIndex]
 
-  const parseLocalDate = (value: string) => {
-    const [d,t] = value.split("T")
-    const [y,m,day] = d.split("-").map(Number)
-    const [h,min] = t.split(":").map(Number)
-    return new Date(y, m-1, day, h, min)
-  }
-
-  const getSpeed = () => {
-    let s = troop.speed
-    if (attackType === "siege") s = s / 2
-    return s
-  }
-
-  const getDistance = () => {
+  // 📏 MESAFE
+  const calcDistance = () => {
     if (!attacker || !target) return 0
-    return Math.sqrt((attacker.x-target.x)**2 + (attacker.y-target.y)**2)
+    const dx = attacker.x - target.x
+    const dy = attacker.y - target.y
+    return Math.sqrt(dx * dx + dy * dy)
   }
 
-  const getTime = () => {
-    const d = getDistance()
-    const s = getSpeed()
-    if (!d || !s) return 0
-
-    if (d <= 20) return d / s
-    const base = 20 / s
-    const bonus = s * (1 + turnuva * 0.1)
-    return base + (d-20)/bonus
-  }
-
-  const addAttack = () => {
+  // ➕ EKLE
+  const handleAdd = () => {
     if (!attacker || !target) return alert("Köy seç")
-    if (!arrivalTime) return alert("Varış gir")
 
-    const duration = getTime()
-    const arrival = parseLocalDate(arrivalTime)
-    const departure = new Date(arrival.getTime() - duration*3600*1000)
+    const distance = calcDistance()
+    const duration = distance / troop.speed
 
-    onAddAttack({
+    const newAttack: Attack = {
       id: Date.now(),
       attacker: attacker.name,
       target: target.name,
       troop: troop.name,
       type: attackType,
-      distance: getDistance(),
+      distance,
       duration,
-      arrival: arrival.toLocaleString(),
-      departure: departure.toLocaleString()
-    })
+      wave,
+      arrival: "",
+      departure: ""
+    }
+
+    onAddAttack(newAttack)
   }
 
   return (
-    <div className="card">
-      <h3>⚔️ Saldırı Oluştur</h3>
+    <div style={{ marginBottom: 20 }}>
+      <h3>➕ Saldırı Ekle</h3>
 
-      <div className="tabs">
-        {(["roma","cermen","galya"] as const).map(t=>(
-          <div key={t} className={`tab ${tribe===t?"active":""}`} onClick={()=>setTribe(t)}>
-            {t.toUpperCase()}
-          </div>
+      {/* ATTACKER */}
+      <select onChange={e => setAttackerId(Number(e.target.value))}>
+        <option>Attacker seç</option>
+        {villages
+          .filter(v => v.type === "saldiran")
+          .map(v => (
+            <option key={v.id} value={v.id}>
+              {v.name} ({v.x}|{v.y})
+            </option>
+          ))}
+      </select>
+
+      {/* TARGET */}
+      <select onChange={e => setTargetId(Number(e.target.value))}>
+        <option>Target seç</option>
+        {villages
+          .filter(v => v.type === "hedef")
+          .map(v => (
+            <option key={v.id} value={v.id}>
+              {v.name} ({v.x}|{v.y})
+            </option>
+          ))}
+      </select>
+
+      {/* TRIBE */}
+      <select onChange={e => setTribe(e.target.value as any)}>
+        <option value="roma">Roma</option>
+        <option value="cermen">Cermen</option>
+        <option value="galya">Galya</option>
+      </select>
+
+      {/* TROOP */}
+      <select onChange={e => setTroopIndex(Number(e.target.value))}>
+        {troops[tribe].map((t, i) => (
+          <option key={i} value={i}>
+            {t.name} ({t.speed})
+          </option>
         ))}
-      </div>
+      </select>
 
-      <div className="grid grid-2">
-        <select onChange={e=>setAttackerId(Number(e.target.value))}>
-          <option>Saldıran</option>
-          {villages.filter((v:any)=>v.type==="saldiran").map((v:any)=>(
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
+      {/* TYPE */}
+      <select onChange={e => setAttackType(e.target.value as any)}>
+        <option value="real">Real</option>
+        <option value="fake">Fake</option>
+        <option value="siege">Siege</option>
+      </select>
 
-        <select onChange={e=>setTargetId(Number(e.target.value))}>
-          <option>Hedef</option>
-          {villages.filter((v:any)=>v.type==="hedef").map((v:any)=>(
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
+      {/* WAVE */}
+      <input
+        type="number"
+        value={wave}
+        onChange={e => setWave(Number(e.target.value))}
+        placeholder="Wave"
+      />
 
-        <select onChange={e=>setTroopIndex(Number(e.target.value))}>
-          {troops[tribe].map((t,i)=>(
-            <option key={i} value={i}>{t.name} ({t.speed})</option>
-          ))}
-        </select>
-
-        <select onChange={e=>setAttackType(e.target.value)}>
-          <option value="real">Gerçek</option>
-          <option value="fake">Fake</option>
-          <option value="siege">Kuşatma</option>
-        </select>
-
-        <input type="number" value={turnuva} onChange={e=>setTurnuva(Number(e.target.value))}/>
-        <input type="datetime-local" value={arrivalTime} onChange={e=>setArrivalTime(e.target.value)}/>
-      </div>
-
-      <button className="btn" onClick={addAttack} style={{marginTop:"10px"}}>
-        Saldırıyı Ekle
-      </button>
+      <button onClick={handleAdd}>Ekle</button>
     </div>
   )
 }
